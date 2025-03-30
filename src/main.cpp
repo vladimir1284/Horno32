@@ -16,6 +16,9 @@
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
+#include <Smoothed.h> 	// Include the library
+
+Smoothed <float> tempSensor; 
 
 int thermoDO = 19;
 int thermoCS = 18;
@@ -38,8 +41,11 @@ const int csPin = 21;   // Chip Select pin P4.3
 const int wrPin = 22;   // Write pin P4.1
 const int dataPin = 23;  // Data pin P4.2
 
-unsigned long previousMillis = 0;  // Store the last time the display was updated
-const unsigned long interval = 200; // Interval in milliseconds (same as your original delay)
+unsigned long previousScreenMillis = 0;  // Store the last time the display was updated
+#define SCREEN_UPDATE_INTERVAL 500 // Interval in milliseconds 
+
+unsigned long previousSensorMillis = 0;  // Store the last time the display was updated
+#define SENSOR_READ_INTERVAL 100 // ms
 
 
 PsychicHttpServer server;
@@ -51,6 +57,9 @@ void setup()
 {
     // initialize serial
     Serial.begin(SERIAL_BAUD_RATE);
+
+    // Initialize temp sensor filter
+    tempSensor.begin(SMOOTHED_AVERAGE, 10);	
 
     
     // start ESP32-SvelteKit
@@ -84,20 +93,20 @@ void loop()
      unsigned long currentMillis = millis();
     
     // Check if it's time to update the display
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;  // Save the current time
+    if (currentMillis - previousScreenMillis >= SCREEN_UPDATE_INTERVAL) {
+        previousScreenMillis = currentMillis;  // Save the current time
         
         // Display temperature simulation
         float simulatedTemperature = (float)count / 10;
-        lcd.printCelsius(thermocouple.readCelsius());
-    
-        // Print value to the Serial Monitor
-        Serial.print("Displayed Temperature: ");
-        Serial.print(thermocouple.readCelsius());
-        Serial.println(" °C");
-    
-        // Increment and reset count for demonstration purposes
-        count = (count + 1) % 1000;
+        lcd.printCelsius(tempSensor.get());
+
+    }
+
+    // Check if it's time to update the display
+    if (currentMillis - previousSensorMillis >= SENSOR_READ_INTERVAL) {
+        previousSensorMillis = currentMillis;  // Save the current time
+        
+        tempSensor.add(thermocouple.readCelsius());
     }
   
 }

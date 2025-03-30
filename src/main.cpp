@@ -15,6 +15,14 @@
 #include <ESP32SvelteKit.h>
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
+#include <max6675.h>
+
+int thermoDO = 19;
+int thermoCS = 18;
+int thermoCLK = 5;
+
+// Temp sensor
+MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
 // Define the HT1621 LCD object
 HT1621 lcd;
@@ -81,11 +89,11 @@ void loop()
         
         // Display temperature simulation
         float simulatedTemperature = (float)count / 10;
-        lcd.printCelsius(simulatedTemperature);
+        lcd.printCelsius(thermocouple.readCelsius());
     
         // Print value to the Serial Monitor
         Serial.print("Displayed Temperature: ");
-        Serial.print(simulatedTemperature);
+        Serial.print(thermocouple.readCelsius());
         Serial.println(" °C");
     
         // Increment and reset count for demonstration purposes

@@ -16,9 +16,9 @@
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
-#include <Smoothed.h> 	// Include the library
+#include "median_filter.h"
 
-Smoothed <float> tempSensor; 
+MedianFilter tempSensor = MedianFilter();
 
 int thermoDO = 19;
 int thermoCS = 18;
@@ -30,7 +30,6 @@ MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 // Define the HT1621 LCD object
 HT1621 lcd;
 
-
 #define SERIAL_BAUD_RATE 115200
 
 // Demo counters
@@ -39,29 +38,56 @@ int count = 0;
 // Pin configuration for the LCD
 const int csPin = 21;   // Chip Select pin P4.3
 const int wrPin = 22;   // Write pin P4.1
-const int dataPin = 23;  // Data pin P4.2
+const int dataPin = 23; // Data pin P4.2
 
-unsigned long previousScreenMillis = 0;  // Store the last time the display was updated
-#define SCREEN_UPDATE_INTERVAL 500 // Interval in milliseconds 
+unsigned long previousScreenMillis = 0; // Store the last time the display was updated
+#define SCREEN_UPDATE_INTERVAL 500      // Interval in milliseconds
 
-unsigned long previousSensorMillis = 0;  // Store the last time the display was updated
-#define SENSOR_READ_INTERVAL 100 // ms
-
+unsigned long previousSensorMillis = 0; // Store the last time the display was updated
+#define SENSOR_READ_INTERVAL 100        // ms
 
 PsychicHttpServer server;
 
 ESP32SvelteKit esp32sveltekit(&server, 120);
 
+void blinkLED(void *pvParameters)
+{
+    pinMode(LED_BUILTIN, OUTPUT);
+    while (true)
+    {
+        digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on
+        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
+        digitalWrite(LED_BUILTIN, LOW);  // Turn the LED off
+        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
+    }
+}
+
+void updateScreen(void *pvParameters)
+{
+    while (true)
+    {
+        lcd.printCelsius(tempSensor.getValue());
+        Serial.print(thermocouple.readCelsius());
+        Serial.print(", ");
+        Serial.println(tempSensor.getValue());
+        vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
+    }
+}
+
+void readTemp(void *pvParameters)
+{
+    while (true)
+    {
+        tempSensor.insertValue(thermocouple.readCelsius());
+        vTaskDelay(pdMS_TO_TICKS(250)); // Wait for 500 ms
+    }
+}
 
 void setup()
 {
     // initialize serial
-    Serial.begin(SERIAL_BAUD_RATE);
+    // Serial.begin(SERIAL_BAUD_RATE);
 
-    // Initialize temp sensor filter
-    tempSensor.begin(SMOOTHED_AVERAGE, 10);	
-
-    
     // start ESP32-SvelteKit
     esp32sveltekit.begin();
 
@@ -69,7 +95,6 @@ void setup()
 
     // Initialize the LCD with the backlight control
     lcd.begin(csPin, wrPin, dataPin);
-    lcd.backlight(); // Turn on the backlight
 
     // Clear the screen
     lcd.clear();
@@ -85,28 +110,38 @@ void setup()
     delay(500);
 
     Serial.println("Setup complete.");
-}
 
+    ESP_LOGV("LEDTask", "Starting LED blink task");
+    xTaskCreatePinnedToCore(
+        blinkLED,               // Function that should be called
+        "LED Blink Task",       // Name of the task (for debugging)
+        2048,                   // Stack size (bytes)
+        NULL,                   // Pass no parameters
+        (tskIDLE_PRIORITY + 10), // Task priority
+        NULL,                   // Task handle
+        1                       // Pin to core 1 (or 0 if preferred)
+    );
+    xTaskCreatePinnedToCore(
+        updateScreen,           // Function that should be called
+        "Update Screen",        // Name of the task (for debugging)
+        2048,                   // Stack size (bytes)
+        NULL,                   // Pass no parameters
+        (tskIDLE_PRIORITY + 1), // Task priority
+        NULL,                   // Task handle
+        1                       // Pin to core 1 (or 0 if preferred)
+    );
+    xTaskCreatePinnedToCore(
+        readTemp,               // Function that should be called
+        "Read Temp Sensor",     // Name of the task (for debugging)
+        2048,                   // Stack size (bytes)
+        NULL,                   // Pass no parameters
+        (tskIDLE_PRIORITY + 1), // Task priority
+        NULL,                   // Task handle
+        1                       // Pin to core 1 (or 0 if preferred)
+    );
+}
 
 void loop()
 {
-     unsigned long currentMillis = millis();
-    
-    // Check if it's time to update the display
-    if (currentMillis - previousScreenMillis >= SCREEN_UPDATE_INTERVAL) {
-        previousScreenMillis = currentMillis;  // Save the current time
-        
-        // Display temperature simulation
-        float simulatedTemperature = (float)count / 10;
-        lcd.printCelsius(tempSensor.get());
 
-    }
-
-    // Check if it's time to update the display
-    if (currentMillis - previousSensorMillis >= SENSOR_READ_INTERVAL) {
-        previousSensorMillis = currentMillis;  // Save the current time
-        
-        tempSensor.add(thermocouple.readCelsius());
-    }
-  
 }

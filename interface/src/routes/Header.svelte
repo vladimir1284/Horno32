@@ -1,15 +1,15 @@
 <script>
 	import { page } from '$app/stores';
 	import logo from '$lib/images/logo_ladetec.png';
-
 </script>
 
 <header>
 	<div class="corner">
 		<img src={logo} alt="Ladetec" />
+		<h1>Horno</h1>
 	</div>
 
-	<nav>
+	<!-- <nav>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
 			<path d="M0,0 L1,2 C1.5,3 1.5,3 2,3 L2,0 Z" />
 		</svg>
@@ -17,17 +17,11 @@
 			<li aria-current={$page.url.pathname === '/' ? 'page' : undefined}>
 				<a href="/">Panel</a>
 			</li>
-			<li aria-current={$page.url.pathname === '/param' ? 'page' : undefined}>
-				<a href="/param">Parámetros</a>
-			</li>
-			<li aria-current={$page.url.pathname.startsWith('/graphics') ? 'page' : undefined}>
-				<a href="/graphics">Fasores</a>
-			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
 			<path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
 		</svg>
-	</nav>
+	</nav> -->
 
 	<!-- <div class="corner">
 		<a href="https://github.com/sveltejs/kit">
@@ -41,10 +35,15 @@
 		display: flex;
 		justify-content: space-between;
 	}
+	h1 {
+		padding: 1erm;
+	}
 
 	.corner {
+		display: flex;
 		width: 3em;
 		height: 3em;
+		margin: 1em;
 	}
 
 	nav {

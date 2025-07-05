@@ -36,12 +36,11 @@
 		);
 		addEventListeners();
 		const element0 = document.getElementById('connect0');
-        if (element0) element0.hidden = true;
+		if (element0) element0.hidden = true;
 		const element1 = document.getElementById('connect1');
-        if (element1) element1.hidden = true;
+		if (element1) element1.hidden = true;
 		const element2 = document.getElementById('connect2');
-        if (element2) element2.hidden = true;
-        
+		if (element2) element2.hidden = true;
 	});
 
 	onDestroy(() => {
@@ -135,16 +134,16 @@
 	<Login />
 {:else}
 	<!-- <div class="drawer lg:drawer-open"> -->
-		<!-- <input id="main-menu" type="checkbox" class="drawer-toggle" bind:checked={menuOpen} /> -->
-		<!-- <div class="drawer-content flex flex-col"> -->
-			<!-- Status bar content here -->
-			<!-- <Statusbar /> -->
+	<!-- <input id="main-menu" type="checkbox" class="drawer-toggle" bind:checked={menuOpen} /> -->
+	<!-- <div class="drawer-content flex flex-col"> -->
+	<!-- Status bar content here -->
+	<!-- <Statusbar /> -->
 
-			<!-- Main page content here -->
-			<!-- <slot /> -->
-		<!-- </div> -->
-		<!-- Side Navigation -->
-		<!-- <div class="drawer-side z-30 shadow-lg">
+	<!-- Main page content here -->
+	<!-- <slot /> -->
+	<!-- </div> -->
+	<!-- Side Navigation -->
+	<!-- <div class="drawer-side z-30 shadow-lg">
 			<label for="main-menu" class="drawer-overlay" />
 			<Menu
 				on:menuClicked={() => {
@@ -157,28 +156,25 @@
 	<div class="app">
 		<Header />
 
-			<main>
-				<slot />
-			</main>		  
-	
-	
+		<main>
+			<slot />
+		</main>
 	</div>
 {/if}
 
 <!-- <Modals> -->
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<!-- <div -->
-		<!-- slot="backdrop" -->
-		<!-- class="fixed inset-0 z-40 max-h-full max-w-full bg-black/20 backdrop-blur" -->
-		<!-- transition:fade -->
-		<!-- on:click={closeModal} -->
-	<!-- /> -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- <div -->
+<!-- slot="backdrop" -->
+<!-- class="fixed inset-0 z-40 max-h-full max-w-full bg-black/20 backdrop-blur" -->
+<!-- transition:fade -->
+<!-- on:click={closeModal} -->
+<!-- /> -->
 <!-- </Modals> -->
 
 <Toast />
 
 <style>
-	
 	.app {
 		display: flex;
 		flex-direction: column;
@@ -196,9 +192,6 @@
 		margin: 0 auto;
 		box-sizing: border-box;
 		overflow-y: auto; /* Enable vertical scrolling for the main element */
-
+		padding: 0;
 	}
-
-	
 </style>
-

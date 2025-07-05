@@ -63,7 +63,7 @@
 <style>
 	.contenedor {
 		max-width: 400px;
-		margin: 40px auto;
+		margin: 10px auto;
 		padding: 20px;
 		background: #ffffff1e;
 		border-radius: 12px;

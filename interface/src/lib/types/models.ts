@@ -56,62 +56,7 @@ export type ApSettings = {
 	subnet_mask: string;
 };
 
-export type LightState = {
-	led_on: boolean;
-	VA: number;
-	VB: number;
-	VC: number;
-	IA: number;
-	IB: number;
-	IC: number;
-	Pt: number;
-	PA: number;
-	PB: number;
-	PC: number;
-	Qt: number;
-	QA: number;
-	QB: number;
-	QC: number;
-	St: number;
-	SA: number;
-	SB: number;
-	SC: number;
-	pft: number;
-	pfA: number;
-	pfB: number;
-	pfC: number;
-	UAB: number;
-	UBC: number;
-	UCA: number;
-	fA: number;
-	fB: number;
-	fC: number;
-	pPenergy: number
-	rPenergy: number
-	pQenergy: number
-	rQenergy: number
-	tPenergy: number
-	tQenergy: number
-	imbalanceVoltage: number;
-	imbalanceCurrent: number;
-	isWorking: boolean;
-	isMainPower: boolean;
-	isBatteryOk: boolean;
-	isBatteryLow: boolean;
-	isBatteryHigh: boolean;
-	isHighTemp: boolean;
-	isLowOilPress: boolean;
-	isOverSpeed: boolean;
-	isOverVoltage: boolean;
-	workingHours: number;
-	temperature: number;
-	batteryLevel: number;
-	oilPressure: number;
-	rpm: number;
-	cmdStop: boolean;
-	modbusQualityTotalReads: number;
-	modbusQualityErrors: number;
-	modbusErrors: number;
+export type systemState = {
 	modbusFails: number;
 	modbusState: boolean;
 };

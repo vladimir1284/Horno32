@@ -1,20 +1,22 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { onMount, onDestroy } from 'svelte';
-	import logo from '$lib/assets/logo.png';
 	import Gauge from '$lib/components/panel-components/Voltmeter.svelte';
 	import Controller from '$lib/components/Controller.svelte';
 	import { notifications } from '$lib/components/toasts/notifications';
+	import { tick } from 'svelte';
 
 	interface Props {
 		data: PageData;
 	}
 
 	let { data }: Props = $props();
-	let value = 180;
+	let value = $state(180);
+
 	function getRandomNumber(min: number, max: number) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
+
 	onMount(() => {
 		// socket.on<systemState>('led', (merterData) => {
 		// 	// systemState = merterData;
@@ -32,8 +34,8 @@
 	<div class="card p-0 md:card-side shadow-primary shadow-2xl">
 		<div class="car-instruments">
 			<Gauge
-				svgWidth={200}
-				svgHeight={200}
+				svgWidth={300}
+				svgHeight={300}
 				magnitude={value}
 				minScale={30}
 				maxScale={350}
@@ -43,8 +45,6 @@
 				decimalPlaces={1}
 				needleColor="red"
 				varName="T"
-				needleStiffness={0.08}
-				needleDamping={0.28}
 			/>
 			<Controller />
 		</div>

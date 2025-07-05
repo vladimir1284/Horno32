@@ -63,7 +63,7 @@
 <style>
 	.contenedor {
 		max-width: 400px;
-		margin: 10px auto;
+		margin: 0;
 		padding: 20px;
 		background: #ffffff1e;
 		border-radius: 12px;
@@ -120,7 +120,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 10px;
+		gap: 0;
 	}
 
 	input[type='range'] {

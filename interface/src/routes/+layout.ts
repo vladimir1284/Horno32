@@ -5,13 +5,13 @@ export const prerender = false;
 export const ssr = false;
 
 export const load = (async ({ fetch }) => {
-	// const result = await fetch('/rest/features');
-	const item = {}//await result.json();
+	const result = await fetch('/rest/features');
+	const item = await result.json();
 	return {
 		features: item,
 		title: 'Horno',
 		github: 'vladimir1284/Horno32',
-		copyright: '2025 Ladetec',
-		appName: 'Horno ESP32'
+		copyright: '2025 Vladímir | LADETEC',
+		appName: 'Horno'
 	};
 }) satisfies LayoutLoad;

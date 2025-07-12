@@ -3,8 +3,63 @@
 	import { onMount, onDestroy } from 'svelte';
 	import Gauge from '$lib/components/panel-components/Voltmeter.svelte';
 	import Controller from '$lib/components/Controller.svelte';
+	import { user } from '$lib/stores/user';
+	import { page } from '$app/state';
 	import { notifications } from '$lib/components/toasts/notifications';
-	import { tick } from 'svelte';
+	import { socket } from '$lib/stores/socket';
+	import type { LightState } from '$lib/types/models';
+
+	let lightState: LightState = $state({ led_on: false });
+
+	let lightOn = $state(false);
+
+	async function getLightstate() {
+		try {
+			const response = await fetch('/rest/lightState', {
+				method: 'GET',
+				headers: {
+					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
+					'Content-Type': 'application/json'
+				}
+			});
+			const light = await response.json();
+			lightOn = light.led_on;
+		} catch (error) {
+			console.error('Error:', error);
+		}
+		return;
+	}
+
+	onMount(() => {
+		// socket.on<LightState>('led', (data) => {
+		// 	lightState = data;
+		// });
+		getLightstate();
+	});
+
+	onDestroy(() => socket.off('led'));
+
+	async function postLightstate() {
+		try {
+			const response = await fetch('/rest/lightState', {
+				method: 'POST',
+				headers: {
+					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ led_on: lightOn })
+			});
+			if (response.status == 200) {
+				notifications.success('Light state updated.', 3000);
+				const light = await response.json();
+				lightOn = light.led_on;
+			} else {
+				notifications.error('User not authorized.', 3000);
+			}
+		} catch (error) {
+			console.error('Error:', error);
+		}
+	}
 
 	interface Props {
 		data: PageData;

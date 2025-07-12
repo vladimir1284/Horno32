@@ -17,6 +17,7 @@
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
 #include "median_filter.h"
+#include <HornoStateService.h>
 
 MedianFilter tempSensor = MedianFilter();
 
@@ -49,6 +50,7 @@ unsigned long previousSensorMillis = 0; // Store the last time the display was u
 PsychicHttpServer server;
 
 ESP32SvelteKit esp32sveltekit(&server, 120);
+HornoStateService hornoStateService = HornoStateService(&server, &esp32sveltekit);
 
 void blinkLED(void *pvParameters)
 {
@@ -70,6 +72,7 @@ void updateScreen(void *pvParameters)
         Serial.print(thermocouple.readCelsius());
         Serial.print(", ");
         Serial.println(tempSensor.getValue());
+        hornoStateService.updateTemp(thermocouple.readCelsius());
         vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
     }
 }
@@ -91,6 +94,9 @@ void setup()
     // start ESP32-SvelteKit
     esp32sveltekit.begin();
 
+    // load the initial light settings
+    hornoStateService.begin();
+
     Serial.println("HT1621 Demo Starting...");
 
     // Initialize the LCD with the backlight control
@@ -111,16 +117,16 @@ void setup()
 
     Serial.println("Setup complete.");
 
-    ESP_LOGV("LEDTask", "Starting LED blink task");
-    xTaskCreatePinnedToCore(
-        blinkLED,               // Function that should be called
-        "LED Blink Task",       // Name of the task (for debugging)
-        2048,                   // Stack size (bytes)
-        NULL,                   // Pass no parameters
-        (tskIDLE_PRIORITY + 10), // Task priority
-        NULL,                   // Task handle
-        1                       // Pin to core 1 (or 0 if preferred)
-    );
+    // ESP_LOGV("LEDTask", "Starting LED blink task");
+    // xTaskCreatePinnedToCore(
+    //     blinkLED,               // Function that should be called
+    //     "LED Blink Task",       // Name of the task (for debugging)
+    //     2048,                   // Stack size (bytes)
+    //     NULL,                   // Pass no parameters
+    //     (tskIDLE_PRIORITY + 10), // Task priority
+    //     NULL,                   // Task handle
+    //     1                       // Pin to core 1 (or 0 if preferred)
+    // );
     xTaskCreatePinnedToCore(
         updateScreen,           // Function that should be called
         "Update Screen",        // Name of the task (for debugging)

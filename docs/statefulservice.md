@@ -180,8 +180,8 @@ The code below demonstrates how to extend the LightStateService class to provide
 ```cpp
 class LightStateService : public StatefulService<LightState> {
  public:
-  LightStateService(PsychicHttpServer* server, SecurityManager *securityManager) :
-      _httpEndpoint(LightState::read, LightState::update, this, server, "/rest/lightState", securityManager,AuthenticationPredicates::IS_AUTHENTICATED) {
+  LightStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
+      _httpEndpoint(LightState::read, LightState::update, this, server, "/rest/lightState", sveltekit->getSecurityManager(),AuthenticationPredicates::IS_AUTHENTICATED) {
   }
 
   void begin(); {
@@ -206,8 +206,8 @@ The code below demonstrates how to extend the LightStateService class to provide
 ```cpp
 class LightStateService : public StatefulService<LightState> {
  public:
-  LightStateService(FS* fs) :
-      _fsPersistence(LightState::read, LightState::update, this, fs, "/config/lightState.json") {
+  LightStateService(ESP32SvelteKit *sveltekit) :
+      _fsPersistence(LightState::read, LightState::update, this, sveltekit->getFS(), "/config/lightState.json") {
   }
 
  private:
@@ -224,8 +224,8 @@ The code below demonstrates how to extend the LightStateService class to provide
 ```cpp
 class LightStateService : public StatefulService<LightState> {
  public:
-  LightStateService(EventSocket *socket) :
-      _eventEndpoint(LightState::read, LightState::update, this, socket, "led") {}
+  LightStateService(ESP32SvelteKit *sveltekit) :
+      _eventEndpoint(LightState::read, LightState::update, this, sveltekit->getSocket(), "led") {}
 
   void begin()
   {
@@ -250,8 +250,8 @@ The code below demonstrates how to extend the LightStateService class to provide
 ```cpp
 class LightStateService : public StatefulService<LightState> {
  public:
-  LightStateService(PsychicHttpServer* server, SecurityManager *securityManager) :
-      _webSocket(LightState::read, LightState::update, this, server, "/ws/lightState", securityManager, AuthenticationPredicates::IS_AUTHENTICATED), {
+  LightStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
+      _webSocket(LightState::read, LightState::update, this, server, "/ws/lightState", sveltekit->getSecurityManager(), AuthenticationPredicates::IS_AUTHENTICATED), {
   }
 
   void begin() {
@@ -279,11 +279,11 @@ The code below demonstrates how to extend the LightStateService class to interfa
 
 class LightStateService : public StatefulService<LightState> {
  public:
-  LightStateService(AsyncMqttClient* mqttClient) :
+  LightStateService(ESP32SvelteKit *sveltekit) :
       _mqttEndpoint(LightState::read,
                   LightState::update,
                   this,
-                  mqttClient,
+                  sveltekit->getMqttClient(),
                   "homeassistant/light/my_light/set",
                   "homeassistant/light/my_light/state") {
   }
@@ -481,6 +481,14 @@ esp32sveltekit.setMDNSAppName("ESP32 SvelteKit Demo App");
 
 making the entry a little bit more verbose. This must be called before `esp32sveltekit.begin();`. If you want to advertise further services just include `#include <ESPmNDS.h>` and use `MDNS.addService()` regularly.
 
+### Use ESP32-SvelteKit loop() Function
+
+Under some circumstances custom services might want to do something periodically. One solution would be to use a dedicated task or RTOS timer for this. Or you can leverage the ESP32-SvelteKit loop-function and have it executed as a callback every 20ms.
+
+```cpp
+esp32sveltekit.addLoopFunction(callback)
+```
+
 ### Factory Reset
 
 A factory reset can not only be evoked from the API, but also by calling
@@ -513,6 +521,14 @@ The settings wakeup pin definition and the signal polarity need to be defined in
 -D WAKEUP_SIGNAL=0 ; 1 for wakeup on HIGH, 0 for wakeup on LOW
 ```
 
+In addition it is possible to change this as well at runtime by calling:
+
+```cpp
+esp32sveltekit.getSleepService()->setWakeUpPin(int pin, bool level, pinTermination termination = pinTermination::FLOATING);
+```
+
+With this function it is also possible to configure the internal pull-up or pull-down resistor for this RTC pin. Albeit this might increase the deep sleep current slightly.
+
 A callback function can be attached and triggers when the ESP32 is requested to go into deep sleep. This allows you to safely deal with the power down event. Like persisting software state by writing to the flash, tiding up or notify a remote server about the immanent disappearance.
 
 ```cpp
@@ -534,9 +550,28 @@ esp32sveltekit.getBatteryService()->updateSOC(float stateOfCharge); // update st
 esp32sveltekit.getBatteryService()->setCharging(boolean isCharging); // notify the client that the device is charging
 ```
 
+### ESP32-SvelteKit Connection Status
+
+Especially for a cases like a colored status LED it can be useful to have a quick indication of the connection status. By calling:
+
+```cpp
+ConnectionStatus status = esp32sveltekit.getConnectionStatus();
+```
+
+the current connection status can be accessed. The following stats are available:
+
+| Status        | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| OFFLINE       | Device is completely offline                                                    |
+| AP            | Access Point is available, but no client is connected                           |
+| AP_CONNECTED  | Access Point is used and at least 1 client is connected                         |
+| STA           | Device connected to a WiFi Station                                              |
+| STA_CONNECTED | Device connected to a WiFi Station and at least 1 client is connected           |
+| STA_MQTT      | Device connected to a WiFi Station and the device is connected to a MQTT server |
+
 ### Custom Features
 
-You may use the compile time feature service also to enable or disable custom features at runtime and thus control the frontend. A custom feature can only be added during initializing the ESP32 and ESP32-SvelteKit. A feature can't be updated on runtime once it is set.
+You may use the compile time feature service also to enable or disable custom features at runtime and thus control the frontend. A custom feature can only be added during initializing the ESP32 and ESP32-SvelteKit. The frontend queries the features only when first loading the page. Thus the frontend must be refreshed for the changes to become effective.
 
 ```cpp
 esp32sveltekit.getFeatureService()->addFeature("custom_feature", true); // or false to disable it

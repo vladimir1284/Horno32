@@ -1,5 +1,5 @@
-#ifndef WiFiStatus_h
-#define WiFiStatus_h
+#ifndef CoreDump_h
+#define CoreDump_h
 
 /**
  *   ESP32 SvelteKit
@@ -15,33 +15,25 @@
  *   the terms of the LGPL v3 license. See the LICENSE file for details.
  **/
 
+#include <ArduinoJson.h>
+#include <ESPFS.h>
+#include <PsychicHttp.h>
+#include <SecurityManager.h>
 #include <WiFi.h>
 
-#include <ArduinoJson.h>
-#include <PsychicHttp.h>
-#include <IPUtils.h>
-#include <SecurityManager.h>
+#define CORE_DUMP_SERVICE_PATH "/rest/coreDump"
 
-#define WIFI_STATUS_SERVICE_PATH "/rest/wifiStatus"
-
-class WiFiStatus
+class CoreDump
 {
 public:
-    WiFiStatus(PsychicHttpServer *server, SecurityManager *securityManager);
+    CoreDump(PsychicHttpServer *server, SecurityManager *securityManager);
 
     void begin();
-
-    bool isConnected();
 
 private:
     PsychicHttpServer *_server;
     SecurityManager *_securityManager;
-
-    // static functions for logging WiFi events to the UART
-    static void onStationModeConnected(WiFiEvent_t event, WiFiEventInfo_t info);
-    static void onStationModeDisconnected(WiFiEvent_t event, WiFiEventInfo_t info);
-    static void onStationModeGotIP(WiFiEvent_t event, WiFiEventInfo_t info);
-    esp_err_t wifiStatus(PsychicRequest *request);
+    esp_err_t coreDump(PsychicRequest *request);
 };
 
-#endif // end WiFiStatus_h
+#endif // end CoreDump_h

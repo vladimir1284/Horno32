@@ -13,11 +13,12 @@
  **/
 
 #include <ESP32SvelteKit.h>
+#include <LightMqttSettingsService.h>
+#include <LightStateService.h>
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
 #include "median_filter.h"
-#include <HornoStateService.h>
 
 MedianFilter tempSensor = MedianFilter();
 
@@ -50,19 +51,14 @@ unsigned long previousSensorMillis = 0; // Store the last time the display was u
 PsychicHttpServer server;
 
 ESP32SvelteKit esp32sveltekit(&server, 120);
-HornoStateService hornoStateService = HornoStateService(&server, &esp32sveltekit);
 
-void blinkLED(void *pvParameters)
-{
-    pinMode(LED_BUILTIN, OUTPUT);
-    while (true)
-    {
-        digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on
-        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
-        digitalWrite(LED_BUILTIN, LOW);  // Turn the LED off
-        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
-    }
-}
+LightMqttSettingsService lightMqttSettingsService = LightMqttSettingsService(&server,
+                                                                             &esp32sveltekit);
+
+LightStateService lightStateService = LightStateService(&server,
+                                                        &esp32sveltekit,
+                                                        &lightMqttSettingsService);
+
 
 void updateScreen(void *pvParameters)
 {
@@ -72,7 +68,7 @@ void updateScreen(void *pvParameters)
         Serial.print(thermocouple.readCelsius());
         Serial.print(", ");
         Serial.println(tempSensor.getValue());
-        hornoStateService.updateTemp(thermocouple.readCelsius());
+        // lightStateService.updateTemp(thermocouple.readCelsius());
         vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
     }
 }
@@ -85,19 +81,18 @@ void readTemp(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(250)); // Wait for 500 ms
     }
 }
-
 void setup()
 {
-    // initialize serial
-    // Serial.begin(SERIAL_BAUD_RATE);
+    // start serial and filesystem
+    Serial.begin(SERIAL_BAUD_RATE);
 
     // start ESP32-SvelteKit
     esp32sveltekit.begin();
 
     // load the initial light settings
-    hornoStateService.begin();
-
-    Serial.println("HT1621 Demo Starting...");
+    lightStateService.begin();
+    // start the light service
+    lightMqttSettingsService.begin(); // Display markers as a part of the startup sequence
 
     // Initialize the LCD with the backlight control
     lcd.begin(csPin, wrPin, dataPin);
@@ -105,7 +100,6 @@ void setup()
     // Clear the screen
     lcd.clear();
 
-    // Display markers as a part of the startup sequence
     lcd.setMarker(USB);
     delay(500);
     lcd.setMarker(CH51);
@@ -149,5 +143,6 @@ void setup()
 
 void loop()
 {
-
+    // Delete Arduino loop task, as it is not needed in this example
+    vTaskDelete(NULL);
 }

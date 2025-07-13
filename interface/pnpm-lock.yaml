@@ -11,9 +11,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.1.11
         version: 4.1.11
-      autoprefixer:
-        specifier: ^10.4.21
-        version: 10.4.21(postcss@8.4.39)
       chart.js:
         specifier: ^4.4.0
         version: 4.4.3
@@ -23,6 +20,9 @@ importers:
       compare-versions:
         specifier: ^6.0.0
         version: 6.1.0
+      complex.js:
+        specifier: ^2.4.2
+        version: 2.4.2
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -69,6 +69,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^6.2.1
         version: 6.21.0(eslint@8.57.0)(typescript@5.5.3)
+      autoprefixer:
+        specifier: ^10.4.21
+        version: 10.4.21(postcss@8.4.39)
       daisyui:
         specifier: ^5.0.43
         version: 5.0.43
@@ -82,7 +85,7 @@ importers:
         specifier: ^2.45.1
         version: 2.46.1(eslint@8.57.0)(svelte@5.35.2)
       postcss:
-        specifier: ^8.4.27
+        specifier: ^8.4.39
         version: 8.4.39
       prettier:
         specifier: ^3.1.0
@@ -103,7 +106,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0
       tailwindcss:
-        specifier: ^4.1.10
+        specifier: ^4.1.11
         version: 4.1.11
       tslib:
         specifier: ^2.6.1
@@ -796,6 +799,9 @@ packages:
 
   compare-versions@6.1.0:
     resolution: {integrity: sha512-LNZQXhqUvqUTotpZ00qLSaify3b4VFD588aRr8MKFw4CMUr98ytzCW5wDH5qx/DEY5kCDXcbcRuCqL0szEf2tg==}
+
+  complex.js@2.4.2:
+    resolution: {integrity: sha512-qtx7HRhPGSCBtGiST4/WGHuW+zeaND/6Ld+db6PbrulIB1i2Ev/2UPiqcmpQNPSyfBKraC0EOvOKCB5dGZKt3g==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -2383,6 +2389,8 @@ snapshots:
   color-name@1.1.4: {}
 
   compare-versions@6.1.0: {}
+
+  complex.js@2.4.2: {}
 
   concat-map@0.0.1: {}
 

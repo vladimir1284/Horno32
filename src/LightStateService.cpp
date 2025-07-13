@@ -64,6 +64,7 @@ void LightStateService::begin()
     _httpEndpoint.begin();
     _eventEndpoint.begin();
     _state.ledOn = DEFAULT_LED_STATE;
+    _state.temperature = 0;
     onConfigUpdated();
 }
 
@@ -71,6 +72,11 @@ void LightStateService::onConfigUpdated()
 {
     digitalWrite(LED_BUILTIN, _state.ledOn ? 1 : 0);
 }
+
+void LightStateService::setTemp(float temp)
+    {
+        _state.temperature = temp;
+    }
 
 void LightStateService::registerConfig()
 {

@@ -68,7 +68,7 @@ void updateScreen(void *pvParameters)
         Serial.print(thermocouple.readCelsius());
         Serial.print(", ");
         Serial.println(tempSensor.getValue());
-        // lightStateService.updateTemp(thermocouple.readCelsius());
+        lightStateService.setTemp(thermocouple.readCelsius());
         vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
     }
 }

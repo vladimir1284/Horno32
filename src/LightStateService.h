@@ -36,10 +36,12 @@ class LightState
 {
 public:
     bool ledOn;
+    float temperature;
 
     static void read(LightState &settings, JsonObject &root)
     {
         root["led_on"] = settings.ledOn;
+        root["temperature"] = settings.temperature;
     }
 
     static StateUpdateResult update(JsonObject &root, LightState &lightState)
@@ -89,6 +91,8 @@ public:
                       LightMqttSettingsService *lightMqttSettingsService);
 
     void begin();
+
+    void setTemp(float temp);
 
 private:
     HttpEndpoint<LightState> _httpEndpoint;

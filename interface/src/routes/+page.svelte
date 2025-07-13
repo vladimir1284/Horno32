@@ -24,6 +24,8 @@
 			});
 			const light = await response.json();
 			lightOn = light.led_on;
+			value = light.temperature;
+			console.log(light)
 		} catch (error) {
 			console.error('Error:', error);
 		}
@@ -31,35 +33,12 @@
 	}
 
 	onMount(() => {
-		// socket.on<LightState>('led', (data) => {
-		// 	lightState = data;
-		// });
-		getLightstate();
+		socket.on<LightState>('led', (data) => {
+			lightState = data;
+		});
 	});
 
 	onDestroy(() => socket.off('led'));
-
-	async function postLightstate() {
-		try {
-			const response = await fetch('/rest/lightState', {
-				method: 'POST',
-				headers: {
-					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ led_on: lightOn })
-			});
-			if (response.status == 200) {
-				notifications.success('Light state updated.', 3000);
-				const light = await response.json();
-				lightOn = light.led_on;
-			} else {
-				notifications.error('User not authorized.', 3000);
-			}
-		} catch (error) {
-			console.error('Error:', error);
-		}
-	}
 
 	interface Props {
 		data: PageData;
@@ -79,7 +58,7 @@
 		// });
 		// timeout = setTimeout(requestData, 500);
 		const interval = setInterval(() => {
-			value = getRandomNumber(30, 350);
+			getLightstate();
 		}, 5000);
 		// varCmdStop = false;
 	});

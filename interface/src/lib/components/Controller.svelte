@@ -1,11 +1,39 @@
 <script>
+	import { page } from '$app/state';
+	import { user } from '$lib/stores/user';
+
 	let modo = 'automatico';
 
 	let temperatura = 180;
 	let potenciaSuperior = 50;
 	let potenciaInferior = 50;
 
+	let lightOn = 'true';
+
+	async function postLightstate() {
+		try {
+			const response = await fetch('/rest/lightState', {
+				method: 'POST',
+				headers: {
+					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ led_on: lightOn=='true'?0:1 })
+			});
+			if (response.status == 200) {
+				notifications.success('Light state updated.', 3000);
+				const light = await response.json();
+				lightOn = light.led_on;
+			} else {
+				notifications.error('User not authorized.', 3000);
+			}
+		} catch (error) {
+			console.error('Error:', error);
+		}
+	}
+
 	const confirmarAutomatico = () => {
+		postLightstate();
 		console.log(`Temperatura automática establecida en ${temperatura}°C`);
 	};
 

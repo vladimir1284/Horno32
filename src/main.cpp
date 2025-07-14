@@ -13,8 +13,8 @@
  **/
 
 #include <ESP32SvelteKit.h>
-#include <LightMqttSettingsService.h>
-#include <LightStateService.h>
+#include <HornoMqttSettingsService.h>
+#include <HornoStateService.h>
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
@@ -52,12 +52,12 @@ PsychicHttpServer server;
 
 ESP32SvelteKit esp32sveltekit(&server, 120);
 
-LightMqttSettingsService lightMqttSettingsService = LightMqttSettingsService(&server,
+HornoMqttSettingsService hornoMqttSettingsService = HornoMqttSettingsService(&server,
                                                                              &esp32sveltekit);
 
-LightStateService lightStateService = LightStateService(&server,
+HornoStateService hornoStateService = HornoStateService(&server,
                                                         &esp32sveltekit,
-                                                        &lightMqttSettingsService);
+                                                        &hornoMqttSettingsService);
 
 
 void updateScreen(void *pvParameters)
@@ -68,7 +68,7 @@ void updateScreen(void *pvParameters)
         Serial.print(thermocouple.readCelsius());
         Serial.print(", ");
         Serial.println(tempSensor.getValue());
-        lightStateService.setTemp(thermocouple.readCelsius());
+        hornoStateService.setTemp(thermocouple.readCelsius());
         vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
     }
 }
@@ -89,12 +89,12 @@ void setup()
     // start ESP32-SvelteKit
     esp32sveltekit.begin();
 
-    // load the initial light settings
-    lightStateService.begin();
-    // start the light service
-    lightMqttSettingsService.begin(); // Display markers as a part of the startup sequence
+    // load the initial horno settings
+    hornoStateService.begin();
+    // start the horno service
+    hornoMqttSettingsService.begin(); // Display markers as a part of the startup sequence
 
-    // Initialize the LCD with the backlight control
+    // Initialize the LCD with the backhorno control
     lcd.begin(csPin, wrPin, dataPin);
 
     // Clear the screen

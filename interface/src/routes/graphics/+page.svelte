@@ -3,14 +3,14 @@
 	import { user } from '$lib/stores/user';
 	import { socket } from '$lib/stores/socket';
 	import { page } from '$app/stores';
-	import type { LightState } from '$lib/types/models';
+	import type { HornoState } from '$lib/types/models';
 
 	import PhasorChart from "$lib/components/chart-components/PhasorChart.svelte";
 	import PowerChart from '$lib/components/chart-components/PowerChart.svelte';
 
 	import Complex from 'complex.js'
 
-	$: lightState = {
+	$: hornoState = {
 		led_on: false,
 		VA: 0,
 		VB: 0,
@@ -123,17 +123,17 @@
     }
 
 	function intermediateCalculation() {
-		if (lightState.PA != 0)
-			angIa = (Math.sign(lightState.QA) * Math.atan(Math.abs(lightState.QA)/lightState.PA)) * 180/Math.PI;
-		else angIa = Math.sign(lightState.QA) * 90;
-		if (lightState.PB != 0)
-			angIb = Math.sign(lightState.QB) * Math.atan(Math.abs(lightState.QB)/lightState.PB) * 180/Math.PI;
-		else angIb = Math.sign(lightState.QA) * 90;
-		if (lightState.PC != 0)
-			angIc = Math.sign(lightState.QC) * Math.atan(Math.abs(lightState.QC)/lightState.PC) * 180/Math.PI;
-		else angIc = Math.sign(lightState.QA) * 90;
+		if (hornoState.PA != 0)
+			angIa = (Math.sign(hornoState.QA) * Math.atan(Math.abs(hornoState.QA)/hornoState.PA)) * 180/Math.PI;
+		else angIa = Math.sign(hornoState.QA) * 90;
+		if (hornoState.PB != 0)
+			angIb = Math.sign(hornoState.QB) * Math.atan(Math.abs(hornoState.QB)/hornoState.PB) * 180/Math.PI;
+		else angIb = Math.sign(hornoState.QA) * 90;
+		if (hornoState.PC != 0)
+			angIc = Math.sign(hornoState.QC) * Math.atan(Math.abs(hornoState.QC)/hornoState.PC) * 180/Math.PI;
+		else angIc = Math.sign(hornoState.QA) * 90;
 
-		Iabs = [Math.abs(lightState.IA), Math.abs(lightState.IB), Math.abs(lightState.IC)];
+		Iabs = [Math.abs(hornoState.IA), Math.abs(hornoState.IB), Math.abs(hornoState.IC)];
 		Iang = [angIa, 240+angIb, 120+angIc];
 		
 		let order = -5;
@@ -144,7 +144,7 @@
 		calculatedImbalanceCurrent = Idif.reduce((p, c) => {return c > p ? c : p})
 		calculatedImbalanceCurrent = 100 * calculatedImbalanceCurrent / Iave;
 		
-		let Vdif = [lightState.VA, lightState.VB, lightState.VC];
+		let Vdif = [hornoState.VA, hornoState.VB, hornoState.VC];
 		let Vave = Vdif.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / 3.0;
 		for (let i = 0; i < 3; i++) Vdif[i] = Math.abs(Vdif[i] - Vave);
 		calculatedImbalanceVoltage = Vdif.reduce((p, c) => {return c > p ? c : p})
@@ -193,8 +193,8 @@
 		if (Imax < 10) phasorDecimalPlaces = 2; else phasorDecimalPlaces = 1;
 
 		// for power charts
-		let maxPower = Math.abs(lightState.Pt);
-    	if (maxPower < Math.abs(lightState.Qt)) maxPower = Math.abs(lightState.Qt);
+		let maxPower = Math.abs(hornoState.Pt);
+    	if (maxPower < Math.abs(hornoState.Qt)) maxPower = Math.abs(hornoState.Qt);
     
 		order = -5;
 		if (maxPower > previousPowerScale * 1.05 || maxPower < previousPowerScale * 1) {
@@ -224,18 +224,18 @@
 
 	async function getLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
 				headers: {
 					Authorization: $page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				}
 			});
-			const light = await response.json();
-			lightState = light;
+			const horno = await response.json();
+			hornoState = horno;
 			intermediateCalculation();
 
-			console.log("ppppp --> getLightState");
+			console.log("ppppp --> getHornoState");
 
 		} catch (error) {
 			console.error('Error:', error);
@@ -252,12 +252,12 @@
 	}
 
 	onMount(()=> {
-		socket.on<LightState>('led', (merterData) => {
-			lightState = merterData;
+		socket.on<HornoState>('led', (merterData) => {
+			hornoState = merterData;
 			isSocketConnected = true;
 			intermediateCalculation();
-			// console.log(lightState);
-			// console.log(`${lightState.PB} ${lightState.QB} ${angIb.toFixed(2)} ${lightState.pfB}`);
+			// console.log(hornoState);
+			// console.log(`${hornoState.PB} ${hornoState.QB} ${angIb.toFixed(2)} ${hornoState.pfB}`);
 		});
 		timeout = setTimeout(requestData, 500); // Request data every 2 seconds
 	});
@@ -274,15 +274,15 @@
 	<h3 class="header">Voltajes y Corrientes Trifásicas</h3>
 
 	<div class="phasors">
-		<div class="c-phasor">Ic={lightState.IC.toFixed(phasorDecimalPlaces)}∠{angIc.toFixed(1)}&deg</div>
-		<div class="b-phasor">Ib={lightState.IB.toFixed(phasorDecimalPlaces)}∠{angIb.toFixed(1)}&deg</div>
-		<div class="a-phasor">Ia={lightState.IA.toFixed(phasorDecimalPlaces)}∠{angIa.toFixed(1)}&deg</div>
+		<div class="c-phasor">Ic={hornoState.IC.toFixed(phasorDecimalPlaces)}∠{angIc.toFixed(1)}&deg</div>
+		<div class="b-phasor">Ib={hornoState.IB.toFixed(phasorDecimalPlaces)}∠{angIb.toFixed(1)}&deg</div>
+		<div class="a-phasor">Ia={hornoState.IA.toFixed(phasorDecimalPlaces)}∠{angIa.toFixed(1)}&deg</div>
 	</div>
 
 	<!-- phasor diagram -->
 	<div class="phasor-diagram">
 		<PhasorChart scale={maxScale} Iabs={[A.abs(), B.abs(), C.abs()]} Iang={[A.arg()*180/Math.PI, B.arg()*180/Math.PI, C.arg()*180/Math.PI]}
-					phaseVoltages={[lightState.VA, lightState.VB, lightState.VC]} lineVoltages={[lightState.UAB, lightState.UBC, lightState. UCA]}
+					phaseVoltages={[hornoState.VA, hornoState.VB, hornoState.VC]} lineVoltages={[hornoState.UAB, hornoState.UBC, hornoState. UCA]}
 					showPhaseVoltages={true} showLineVoltages={true}
 					/>
 	</div>
@@ -296,12 +296,12 @@
 			</tr>
 			<tr>
 				<td class="cell-item">Voltaje</td>
-				<td class="cell-data-right">{lightState.imbalanceVoltage.toFixed(1)} %</td>
+				<td class="cell-data-right">{hornoState.imbalanceVoltage.toFixed(1)} %</td>
 				<td class="cell-data-right">{calculatedImbalanceVoltage.toFixed(1)} %</td>
 			</tr>
 			<tr>
 				<td class="cell-item">Corriente</td>
-				<td class="cell-data-right">{lightState.imbalanceCurrent.toFixed(1)} %</td>
+				<td class="cell-data-right">{hornoState.imbalanceCurrent.toFixed(1)} %</td>
 				<td class="cell-data-right">{calculatedImbalanceCurrent.toFixed(1)} %</td>
 			</tr>
 		</table>
@@ -380,20 +380,20 @@
 
 	<div class="power-diagrams" style="display: flex;">
 		<div class="power-diagram" style="display: flex; justify-content: center; align-items: center; flex: 1;">
-			<PowerChart scale={powerMaxScale} P={lightState.Pt} Q={lightState.Qt} S={lightState.St} fp={lightState.pft} charWidth={240} chartHeight={384} />
+			<PowerChart scale={powerMaxScale} P={hornoState.Pt} Q={hornoState.Qt} S={hornoState.St} fp={hornoState.pft} charWidth={240} chartHeight={384} />
 		</div>
 		<div class="power-diagram" style="display: flex; justify-content: center; align-items: center; flex-direction: column; flex: 1;">
 			<div style="display: flex; justify-content: center; align-items: center; flex-direction: row; flex: 1;">
 				<div style="writing-mode: vertical-rl; transform: rotate(180deg);">fase A</div>
-				<PowerChart scale={phasePowerMaxScale} P={lightState.PA} Q={lightState.QA} S={lightState.SA} fp={lightState.pfA} charWidth={75} chartHeight={130}/>
+				<PowerChart scale={phasePowerMaxScale} P={hornoState.PA} Q={hornoState.QA} S={hornoState.SA} fp={hornoState.pfA} charWidth={75} chartHeight={130}/>
 			</div>
 			<div style="display: flex; justify-content: center; align-items: center; flex-direction: row; flex: 1;">
 				<div style="writing-mode: vertical-rl; transform: rotate(180deg);">fase B</div>
-				<PowerChart scale={phasePowerMaxScale} P={lightState.PB} Q={lightState.QB} S={lightState.SB} fp={lightState.pfB} charWidth={75} chartHeight={130}/>
+				<PowerChart scale={phasePowerMaxScale} P={hornoState.PB} Q={hornoState.QB} S={hornoState.SB} fp={hornoState.pfB} charWidth={75} chartHeight={130}/>
 			</div>
 			<div style="display: flex; justify-content: center; align-items: center; flex-direction: row; flex: 1;">
 				<div style="writing-mode: vertical-rl; transform: rotate(180deg);">fase C</div>
-				<PowerChart scale={phasePowerMaxScale} P={lightState.PC} Q={lightState.QC} charWidth={75} S={lightState.SC} fp={lightState.pfC} chartHeight={130}/>
+				<PowerChart scale={phasePowerMaxScale} P={hornoState.PC} Q={hornoState.QC} charWidth={75} S={hornoState.SC} fp={hornoState.pfC} chartHeight={130}/>
 			</div>
 		</div>
 	</div>

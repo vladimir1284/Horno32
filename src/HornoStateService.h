@@ -1,5 +1,5 @@
-#ifndef LightStateService_h
-#define LightStateService_h
+#ifndef HornoStateService_h
+#define HornoStateService_h
 
 /**
  *   ESP32 SvelteKit
@@ -15,7 +15,7 @@
  *   the terms of the LGPL v3 license. See the LICENSE file for details.
  **/
 
-#include <LightMqttSettingsService.h>
+#include <HornoMqttSettingsService.h>
 
 #include <EventSocket.h>
 #include <HttpEndpoint.h>
@@ -28,39 +28,39 @@
 #define OFF_STATE "OFF"
 #define ON_STATE "ON"
 
-#define LIGHT_SETTINGS_ENDPOINT_PATH "/rest/lightState"
-#define LIGHT_SETTINGS_SOCKET_PATH "/ws/lightState"
+#define LIGHT_SETTINGS_ENDPOINT_PATH "/rest/hornoState"
+#define LIGHT_SETTINGS_SOCKET_PATH "/ws/hornoState"
 #define LIGHT_SETTINGS_EVENT "led"
 
-class LightState
+class HornoState
 {
 public:
     bool ledOn;
     float temperature;
 
-    static void read(LightState &settings, JsonObject &root)
+    static void read(HornoState &settings, JsonObject &root)
     {
         root["led_on"] = settings.ledOn;
         root["temperature"] = settings.temperature;
     }
 
-    static StateUpdateResult update(JsonObject &root, LightState &lightState)
+    static StateUpdateResult update(JsonObject &root, HornoState &hornoState)
     {
         boolean newState = root["led_on"] | DEFAULT_LED_STATE;
-        if (lightState.ledOn != newState)
+        if (hornoState.ledOn != newState)
         {
-            lightState.ledOn = newState;
+            hornoState.ledOn = newState;
             return StateUpdateResult::CHANGED;
         }
         return StateUpdateResult::UNCHANGED;
     }
 
-    static void homeAssistRead(LightState &settings, JsonObject &root)
+    static void homeAssistRead(HornoState &settings, JsonObject &root)
     {
         root["state"] = settings.ledOn ? ON_STATE : OFF_STATE;
     }
 
-    static StateUpdateResult homeAssistUpdate(JsonObject &root, LightState &lightState)
+    static StateUpdateResult homeAssistUpdate(JsonObject &root, HornoState &hornoState)
     {
         String state = root["state"];
         // parse new led state
@@ -74,33 +74,33 @@ public:
             return StateUpdateResult::ERROR;
         }
         // change the new state, if required
-        if (lightState.ledOn != newState)
+        if (hornoState.ledOn != newState)
         {
-            lightState.ledOn = newState;
+            hornoState.ledOn = newState;
             return StateUpdateResult::CHANGED;
         }
         return StateUpdateResult::UNCHANGED;
     }
 };
 
-class LightStateService : public StatefulService<LightState>
+class HornoStateService : public StatefulService<HornoState>
 {
 public:
-    LightStateService(PsychicHttpServer *server,
+    HornoStateService(PsychicHttpServer *server,
                       ESP32SvelteKit *sveltekit,
-                      LightMqttSettingsService *lightMqttSettingsService);
+                      HornoMqttSettingsService *hornoMqttSettingsService);
 
     void begin();
 
     void setTemp(float temp);
 
 private:
-    HttpEndpoint<LightState> _httpEndpoint;
-    EventEndpoint<LightState> _eventEndpoint;
-    MqttEndpoint<LightState> _mqttEndpoint;
-    WebSocketServer<LightState> _webSocketServer;
+    HttpEndpoint<HornoState> _httpEndpoint;
+    EventEndpoint<HornoState> _eventEndpoint;
+    MqttEndpoint<HornoState> _mqttEndpoint;
+    WebSocketServer<HornoState> _webSocketServer;
     PsychicMqttClient *_mqttClient;
-    LightMqttSettingsService *_lightMqttSettingsService;
+    HornoMqttSettingsService *_hornoMqttSettingsService;
 
     void registerConfig();
     void onConfigUpdated();

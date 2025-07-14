@@ -1,5 +1,5 @@
-#ifndef LightMqttSettingsService_h
-#define LightMqttSettingsService_h
+#ifndef HornoMqttSettingsService_h
+#define HornoMqttSettingsService_h
 
 /**
  *   ESP32 SvelteKit
@@ -30,7 +30,7 @@
 #define FACTORY_MQTT_STATUS_TOPIC "esp32sveltekit/status"
 #endif // end FACTORY_MQTT_STATUS_TOPIC
 
-class LightMqttSettings
+class HornoMqttSettings
 {
 public:
     String mqttPath;
@@ -38,7 +38,7 @@ public:
     String uniqueId;
     String stateTopic;
 
-    static void read(LightMqttSettings &settings, JsonObject &root)
+    static void read(HornoMqttSettings &settings, JsonObject &root)
     {
         root["mqtt_path"] = settings.mqttPath;
         root["name"] = settings.name;
@@ -46,27 +46,27 @@ public:
         root["status_topic"] = settings.stateTopic;
     }
 
-    static StateUpdateResult update(JsonObject &root, LightMqttSettings &settings)
+    static StateUpdateResult update(JsonObject &root, HornoMqttSettings &settings)
     {
-        settings.mqttPath = root["mqtt_path"] | SettingValue::format("homeassistant/light/#{unique_id}");
-        settings.name = root["name"] | SettingValue::format("light-#{unique_id}");
-        settings.uniqueId = root["unique_id"] | SettingValue::format("light-#{unique_id}");
+        settings.mqttPath = root["mqtt_path"] | SettingValue::format("homeassistant/horno/#{unique_id}");
+        settings.name = root["name"] | SettingValue::format("horno-#{unique_id}");
+        settings.uniqueId = root["unique_id"] | SettingValue::format("horno-#{unique_id}");
         settings.stateTopic = root["status_topic"] | SettingValue::format(FACTORY_MQTT_STATUS_TOPIC);
         return StateUpdateResult::CHANGED;
     }
 };
 
-class LightMqttSettingsService : public StatefulService<LightMqttSettings>
+class HornoMqttSettingsService : public StatefulService<HornoMqttSettings>
 {
 public:
-    LightMqttSettingsService(PsychicHttpServer *server, ESP32SvelteKit *sveltekit);
+    HornoMqttSettingsService(PsychicHttpServer *server, ESP32SvelteKit *sveltekit);
     void begin();
     void onConfigUpdated();
 
 private:
-    HttpEndpoint<LightMqttSettings> _httpEndpoint;
-    FSPersistence<LightMqttSettings> _fsPersistence;
+    HttpEndpoint<HornoMqttSettings> _httpEndpoint;
+    FSPersistence<HornoMqttSettings> _fsPersistence;
     MqttSettingsService *_mqttSettingsService;
 };
 
-#endif // end LightMqttSettingsService_h
+#endif // end HornoMqttSettingsService_h

@@ -8,22 +8,22 @@
 	let potenciaSuperior = 50;
 	let potenciaInferior = 50;
 
-	let lightOn = 'true';
+	let hornoOn = 'true';
 
 	async function postLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'POST',
 				headers: {
 					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ led_on: lightOn=='true'?0:1 })
+				body: JSON.stringify({ led_on: hornoOn=='true'?0:1 })
 			});
 			if (response.status == 200) {
 				notifications.success('Light state updated.', 3000);
-				const light = await response.json();
-				lightOn = light.led_on;
+				const horno = await response.json();
+				hornoOn = horno.led_on;
 			} else {
 				notifications.error('User not authorized.', 3000);
 			}

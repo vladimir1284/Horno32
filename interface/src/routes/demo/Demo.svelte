@@ -9,23 +9,23 @@
 	import Save from '~icons/tabler/device-floppy';
 	import Reload from '~icons/tabler/reload';
 	import { socket } from '$lib/stores/socket';
-	import type { LightState } from '$lib/types/models';
+	import type { HornoState } from '$lib/types/models';
 
-	let lightState: LightState = $state({ led_on: false });
+	let hornoState: HornoState = $state({ led_on: false });
 
-	let lightOn = $state(false);
+	let hornoOn = $state(false);
 
 	async function getLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
 				headers: {
 					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				}
 			});
-			const light = await response.json();
-			lightOn = light.led_on;
+			const horno = await response.json();
+			hornoOn = horno.led_on;
 		} catch (error) {
 			console.error('Error:', error);
 		}
@@ -33,8 +33,8 @@
 	}
 
 	onMount(() => {
-		socket.on<LightState>('led', (data) => {
-			lightState = data;
+		socket.on<HornoState>('led', (data) => {
+			hornoState = data;
 		});
 		getLightstate();
 	});
@@ -43,18 +43,18 @@
 
 	async function postLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'POST',
 				headers: {
 					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ led_on: lightOn })
+				body: JSON.stringify({ led_on: hornoOn })
 			});
 			if (response.status == 200) {
 				notifications.success('Light state updated.', 3000);
-				const light = await response.json();
-				lightOn = light.led_on;
+				const horno = await response.json();
+				hornoOn = horno.led_on;
 			} else {
 				notifications.error('User not authorized.', 3000);
 			}
@@ -82,7 +82,7 @@
 			<div class="fieldset w-52">
 				<label class="label cursor-pointer">
 					<span class="mr-4 text-base">Light State?</span>
-					<input type="checkbox" bind:checked={lightOn} class="checkbox checkbox-primary" />
+					<input type="checkbox" bind:checked={hornoOn} class="checkbox checkbox-primary" />
 				</label>
 			</div>
 			<div class="grow"></div>
@@ -108,9 +108,9 @@
 				<input
 					type="checkbox"
 					class="toggle toggle-primary"
-					bind:checked={lightState.led_on}
+					bind:checked={hornoState.led_on}
 					onchange={() => {
-						socket.sendEvent('led', lightState);
+						socket.sendEvent('led', hornoState);
 					}}
 				/>
 			</label>

@@ -56,7 +56,7 @@ export type ApSettings = {
 	subnet_mask: string;
 };
 
-export type LightState = {
+export type HornoState = {
 	led_on: boolean;
 };
 

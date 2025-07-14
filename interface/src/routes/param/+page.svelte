@@ -3,7 +3,7 @@
 	import { user } from '$lib/stores/user';
 	import { socket } from '$lib/stores/socket';
 	import { page } from '$app/stores';
-	import type { LightState } from '$lib/types/models';
+	import type { HornoState } from '$lib/types/models';
 
 
 	let isCollapsedEnergy = false;
@@ -16,7 +16,7 @@
     let isCollapsedAparentPower = true;
     let isCollapsedOtherParameters = false;
 
-	$: lightState = {
+	$: hornoState = {
 		led_on: false,
 		VA: 0,
 		VB: 0,
@@ -81,15 +81,15 @@
     
 	async function getLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
 				headers: {
 					Authorization: $page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				}
 			});
-			const light = await response.json();
-			lightState = light;
+			const horno = await response.json();
+			hornoState = horno;
 		} catch (error) {
 			console.error('Error:', error);
 		}
@@ -105,10 +105,10 @@
 	}
 
 	onMount(()=> {
-		socket.on<LightState>('led', (merterData) => {
-			lightState = merterData;
+		socket.on<HornoState>('led', (merterData) => {
+			hornoState = merterData;
 			isSocketConnected = true;
-			console.log(lightState);
+			console.log(hornoState);
 		});
 		timeout = setTimeout(requestData, 500); // Request data every 2 seconds
 	});
@@ -132,27 +132,27 @@
         <table>
             <tr>
                 <td class="cell-item">Activa total [kWh]</td>
-                <td class="cell-data-right">{lightState.tPenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.tPenergy.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Activa positiva [kWh]</td>
-                <td class="cell-data-right">{lightState.pPenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.pPenergy.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Activa inversa [kWh]</td>
-                <td class="cell-data-right">{lightState.rPenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.rPenergy.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Reactiva total [kVArh]</td>
-                <td class="cell-data-right">{lightState.tQenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.tQenergy.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Reactiva positiva [kVArh]</td>
-                <td class="cell-data-right">{lightState.pQenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.pQenergy.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Reactiva inversa [kVArh]</td>
-                <td class="cell-data-right">{lightState.rQenergy.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.rQenergy.toFixed(2)}</td>
             </tr>
         </table>
     </div>
@@ -167,9 +167,9 @@
 	<div class="line-current-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedLineCurrent ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.IA.toFixed(3)}</td>
-                <td class="cell-data">B: {lightState.IB.toFixed(3)}</td>
-                <td class="cell-data">C: {lightState.IC.toFixed(3)}</td>
+                <td class="cell-data">A: {hornoState.IA.toFixed(3)}</td>
+                <td class="cell-data">B: {hornoState.IB.toFixed(3)}</td>
+                <td class="cell-data">C: {hornoState.IC.toFixed(3)}</td>
             </tr>
         </table>
     </div>
@@ -184,9 +184,9 @@
 	<div class="phase-voltage-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedPhaseVoltage ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.VA.toFixed(1)}</td>
-                <td class="cell-data">B: {lightState.VB.toFixed(1)}</td>
-                <td class="cell-data">C: {lightState.VC.toFixed(1)}</td>
+                <td class="cell-data">A: {hornoState.VA.toFixed(1)}</td>
+                <td class="cell-data">B: {hornoState.VB.toFixed(1)}</td>
+                <td class="cell-data">C: {hornoState.VC.toFixed(1)}</td>
             </tr>
         </table>
     </div>
@@ -201,9 +201,9 @@
 	<div class="line-voltage-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedLineVoltage ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.UAB.toFixed(1)}</td>
-                <td class="cell-data">B: {lightState.UBC.toFixed(1)}</td>
-                <td class="cell-data">C: {lightState.UCA.toFixed(1)}</td>
+                <td class="cell-data">A: {hornoState.UAB.toFixed(1)}</td>
+                <td class="cell-data">B: {hornoState.UBC.toFixed(1)}</td>
+                <td class="cell-data">C: {hornoState.UCA.toFixed(1)}</td>
             </tr>
         </table>
     </div>
@@ -215,14 +215,14 @@
 		<div class="collapsible-icon" style="transform: rotate({isCollapsedPowerFactor ? '180deg' : '0'})">&#9650;</div> 
 		<h3 style="font-weight: normal;">Factor de potecia:</h3>
 		<div class="total">total:</div>
-		<div class="data">{lightState.pft.toFixed(2)}</div>
+		<div class="data">{hornoState.pft.toFixed(2)}</div>
 	</div>
 	<div class="power-factor-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedPowerFactor ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.pfA.toFixed(2)}</td>
-                <td class="cell-data">B: {lightState.pfB.toFixed(2)}</td>
-                <td class="cell-data">C: {lightState.pfC.toFixed(2)}</td>
+                <td class="cell-data">A: {hornoState.pfA.toFixed(2)}</td>
+                <td class="cell-data">B: {hornoState.pfB.toFixed(2)}</td>
+                <td class="cell-data">C: {hornoState.pfC.toFixed(2)}</td>
             </tr>
         </table>
     </div>
@@ -234,14 +234,14 @@
 		<div class="collapsible-icon" style="transform: rotate({isCollapsedActivePower ? '180deg' : '0'})">&#9650;</div> 
 		<h3 style="font-weight: normal;">Potencia activa P [W]:</h3>
 		<div class="total">total:</div>
-		<div class="data">{lightState.Pt.toFixed(0)}</div>
+		<div class="data">{hornoState.Pt.toFixed(0)}</div>
 	</div>
 	<div class="active-power-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedActivePower ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.PA.toFixed(0)}</td>
-                <td class="cell-data">B: {lightState.PB.toFixed(0)}</td>
-                <td class="cell-data">C: {lightState.PC.toFixed(0)}</td>
+                <td class="cell-data">A: {hornoState.PA.toFixed(0)}</td>
+                <td class="cell-data">B: {hornoState.PB.toFixed(0)}</td>
+                <td class="cell-data">C: {hornoState.PC.toFixed(0)}</td>
             </tr>
         </table>
     </div>
@@ -253,14 +253,14 @@
 		<div class="collapsible-icon" style="transform: rotate({isCollapsedReactivePower ? '180deg' : '0'})">&#9650;</div> 
 		<h3 style="font-weight: normal;">Potencia reactiva Q [VAr]:</h3>
 		<div class="total">total:</div>
-		<div class="data">{lightState.Qt.toFixed(0)}</div>
+		<div class="data">{hornoState.Qt.toFixed(0)}</div>
 	</div>
 	<div class="reactive-power-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedReactivePower ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.QA.toFixed(0)}</td>
-                <td class="cell-data">B: {lightState.QB.toFixed(0)}</td>
-                <td class="cell-data">C: {lightState.QC.toFixed(0)}</td>
+                <td class="cell-data">A: {hornoState.QA.toFixed(0)}</td>
+                <td class="cell-data">B: {hornoState.QB.toFixed(0)}</td>
+                <td class="cell-data">C: {hornoState.QC.toFixed(0)}</td>
             </tr>
         </table>
     </div>
@@ -272,14 +272,14 @@
 		<div class="collapsible-icon" style="transform: rotate({isCollapsedAparentPower ? '180deg' : '0'})">&#9650;</div> 
 		<h3 style="font-weight: normal;">Potencia aparente S [VA]:</h3>
 		<div class="total">total:</div>
-		<div class="data">{lightState.St.toFixed(0)}</div>
+		<div class="data">{hornoState.St.toFixed(0)}</div>
 	</div>
 	<div class="aparent-power-items" style="transition: max-height 1s; overflow: hidden; max-height: {isCollapsedAparentPower ? '0' : '60px'};">
         <table>
             <tr>
-                <td class="cell-data">A: {lightState.SA.toFixed(0)}</td>
-                <td class="cell-data">B: {lightState.SB.toFixed(0)}</td>
-                <td class="cell-data">C: {lightState.SC.toFixed(0)}</td>
+                <td class="cell-data">A: {hornoState.SA.toFixed(0)}</td>
+                <td class="cell-data">B: {hornoState.SB.toFixed(0)}</td>
+                <td class="cell-data">C: {hornoState.SC.toFixed(0)}</td>
             </tr>
         </table>
     </div>
@@ -295,35 +295,35 @@
         <table>
             <tr>
                 <td class="cell-item">Frecuencia [Hz]</td>
-                <td class="cell-data-right">{lightState.fA.toFixed(2)}</td>
+                <td class="cell-data-right">{hornoState.fA.toFixed(2)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Horas de trabajo [h]</td>
-                <td class="cell-data-right">{lightState.workingHours.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.workingHours.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Temperatura [&degC]</td>
-                <td class="cell-data-right">{lightState.temperature.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.temperature.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Voltaje de batería [V]</td>
-                <td class="cell-data-right">{lightState.batteryLevel.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.batteryLevel.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Presión de aceite [kg/cm&sup2]</td>
-                <td class="cell-data-right">{lightState.oilPressure.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.oilPressure.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">RPM</td>
-                <td class="cell-data-right">{lightState.rpm.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.rpm.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Desbalance de voltaje [%]</td>
-                <td class="cell-data-right">{lightState.imbalanceVoltage.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.imbalanceVoltage.toFixed(1)}</td>
             </tr>
 			<tr>
                 <td class="cell-item">Desbalance de corriente [%]</td>
-                <td class="cell-data-right">{lightState.imbalanceCurrent.toFixed(1)}</td>
+                <td class="cell-data-right">{hornoState.imbalanceCurrent.toFixed(1)}</td>
             </tr>
 
         </table>

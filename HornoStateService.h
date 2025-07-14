@@ -5,7 +5,7 @@
 #include <HttpEndpoint.h>
 #include <PsychicHttpServer.h>
 
-#define HORNO_SETTINGS_ENDPOINT_PATH "/rest/lightState"
+#define HORNO_SETTINGS_ENDPOINT_PATH "/rest/hornoState"
 #define HORNO_SETTINGS_SOCKET_PATH "/ws/hornoState"
 
 #define DEFAULT_LED_STATE false

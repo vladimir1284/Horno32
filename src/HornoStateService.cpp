@@ -12,44 +12,44 @@
  *   the terms of the LGPL v3 license. See the LICENSE file for details.
  **/
 
-#include <LightStateService.h>
+#include <HornoStateService.h>
 
-LightStateService::LightStateService(PsychicHttpServer *server,
+HornoStateService::HornoStateService(PsychicHttpServer *server,
                                      ESP32SvelteKit *sveltekit,
-                                     LightMqttSettingsService *lightMqttSettingsService) : _httpEndpoint(LightState::read,
-                                                                                                         LightState::update,
+                                     HornoMqttSettingsService *hornoMqttSettingsService) : _httpEndpoint(HornoState::read,
+                                                                                                         HornoState::update,
                                                                                                          this,
                                                                                                          server,
                                                                                                          LIGHT_SETTINGS_ENDPOINT_PATH,
                                                                                                          sveltekit->getSecurityManager(),
                                                                                                          AuthenticationPredicates::IS_AUTHENTICATED),
-                                                                                           _eventEndpoint(LightState::read,
-                                                                                                          LightState::update,
+                                                                                           _eventEndpoint(HornoState::read,
+                                                                                                          HornoState::update,
                                                                                                           this,
                                                                                                           sveltekit->getSocket(),
                                                                                                           LIGHT_SETTINGS_EVENT),
-                                                                                           _mqttEndpoint(LightState::homeAssistRead,
-                                                                                                         LightState::homeAssistUpdate,
+                                                                                           _mqttEndpoint(HornoState::homeAssistRead,
+                                                                                                         HornoState::homeAssistUpdate,
                                                                                                          this,
                                                                                                          sveltekit->getMqttClient()),
-                                                                                           _webSocketServer(LightState::read,
-                                                                                                            LightState::update,
+                                                                                           _webSocketServer(HornoState::read,
+                                                                                                            HornoState::update,
                                                                                                             this,
                                                                                                             server,
                                                                                                             LIGHT_SETTINGS_SOCKET_PATH,
                                                                                                             sveltekit->getSecurityManager(),
                                                                                                             AuthenticationPredicates::IS_AUTHENTICATED),
                                                                                            _mqttClient(sveltekit->getMqttClient()),
-                                                                                           _lightMqttSettingsService(lightMqttSettingsService)
+                                                                                           _hornoMqttSettingsService(hornoMqttSettingsService)
 {
     // configure led to be output
     pinMode(LED_BUILTIN, OUTPUT);
 
     // configure MQTT callback
-    _mqttClient->onConnect(std::bind(&LightStateService::registerConfig, this));
+    _mqttClient->onConnect(std::bind(&HornoStateService::registerConfig, this));
 
-    // configure update handler for when the light settings change
-    _lightMqttSettingsService->addUpdateHandler([&](const String &originId)
+    // configure update handler for when the horno settings change
+    _hornoMqttSettingsService->addUpdateHandler([&](const String &originId)
                                                 { registerConfig(); },
                                                 false);
 
@@ -59,7 +59,7 @@ LightStateService::LightStateService(PsychicHttpServer *server,
                      false);
 }
 
-void LightStateService::begin()
+void HornoStateService::begin()
 {
     _httpEndpoint.begin();
     _eventEndpoint.begin();
@@ -68,17 +68,17 @@ void LightStateService::begin()
     onConfigUpdated();
 }
 
-void LightStateService::onConfigUpdated()
+void HornoStateService::onConfigUpdated()
 {
     digitalWrite(LED_BUILTIN, _state.ledOn ? 1 : 0);
 }
 
-void LightStateService::setTemp(float temp)
+void HornoStateService::setTemp(float temp)
     {
         _state.temperature = temp;
     }
 
-void LightStateService::registerConfig()
+void HornoStateService::registerConfig()
 {
     if (!_mqttClient->connected())
     {
@@ -89,7 +89,7 @@ void LightStateService::registerConfig()
     String pubTopic;
 
     JsonDocument doc;
-    _lightMqttSettingsService->read([&](LightMqttSettings &settings)
+    _hornoMqttSettingsService->read([&](HornoMqttSettings &settings)
                                     {
     configTopic = settings.mqttPath + "/config";
     subTopic = settings.mqttPath + "/set";

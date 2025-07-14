@@ -6,7 +6,7 @@ The actual code for the front end is located under [interface/src/](https://gith
 | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | [routes/](https://github.com/theelims/ESP32-sveltekit/tree/main/interface/src/routes/)                        | Root of the routing system                                     |
 | [routes/connections/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/connections) | Setting and status pages for MQTT, NTP, etc.                   |
-| [routes/demo/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/demo/)              | The lightstate demo                                            |
+| [routes/demo/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/demo/)              | The hornostate demo                                            |
 | [routes/system/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/system/)          | Status page for ESP32 and OTA settings                         |
 | [routes/user/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/user/)              | Edit and add users and change passwords                        |
 | [routes/wifi/](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/wifi/)              | Status and settings for WiFi station and AP                    |
@@ -21,7 +21,7 @@ The back end provides a JSON which features of the back end are enabled by the [
 
 ## Delete `demo/` Project
 
-The light state demo project is included by default to demonstrate the use of the backend and front end. It demonstrates the use of the MQTT-API, websocket API and REST API to switch on the build in LED of the board. [routes/connections/mqtt/MQTTConfig.svelte](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/connections/mqtt/MQTTConfig.svelte) is also part of the 'demo/' Project. You can reuse this to set your own MQTT topics, or delete it. Do not forget to adjust `+page.svelte` as well. Use it as an example how to create your own custom API and access it from the front end. It can be deleted safely after it has been [removed from the menu](#adapt-the-menu) as well.
+The horno state demo project is included by default to demonstrate the use of the backend and front end. It demonstrates the use of the MQTT-API, websocket API and REST API to switch on the build in LED of the board. [routes/connections/mqtt/MQTTConfig.svelte](https://github.com/theelims/ESP32-sveltekit/blob/main/interface/src/routes/connections/mqtt/MQTTConfig.svelte) is also part of the 'demo/' Project. You can reuse this to set your own MQTT topics, or delete it. Do not forget to adjust `+page.svelte` as well. Use it as an example how to create your own custom API and access it from the front end. It can be deleted safely after it has been [removed from the menu](#adapt-the-menu) as well.
 
 ## Create your root `+page.svelte`
 
@@ -52,7 +52,7 @@ The menu consists of an array of menu items. These are defined as follows:
 },
 ```
 
-- Where `title` refers to the page title. It must be identical to `page.data.title` as defined in the `+page.ts` in any of your routes. If they do not match the corresponding menu item is not highlighted on first page load or a page refresh. A minimum `+page.ts` looks like this:
+- Where `title` refers to the page title. It must be identical to `page.data.title` as defined in the `+page.ts` in any of your routes. If they do not match the corresponding menu item is not highhornoed on first page load or a page refresh. A minimum `+page.ts` looks like this:
 
 ```ts
 import type { PageLoad } from "./$types";

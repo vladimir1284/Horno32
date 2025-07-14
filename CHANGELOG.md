@@ -268,7 +268,7 @@ Adapt the class constructor (`(PsychicHttpServer *server, ...`) to PsychicHttpSe
 Due to the loading sequence HttpEndoint and WebsocketServer both have gotten a `begin()` function to register their http endpoints with the server. This must be called in your stateful services' own `begin()` function:
 
 ```cpp
-void LightStateService::begin()
+void HornoStateService::begin()
 {
     _httpEndpoint.begin();
     _webSocketServer.begin();
@@ -327,7 +327,7 @@ void LightStateService::begin()
 - AsyncTCP tasks run on Core 0 to move all networking related stuff to Core 0 and free up Core 1 for business logic
 - Compiler flag on which core ESP32-sveltekit tasks should run
 - Renamed WebSocketRxTx.h to WebSocketServer.h to create a distinction between WS Client and WS Server interfaces
-- Made code of LightStateExample slightly more verbose
+- Made code of HornoStateExample slightly more verbose
 - getServer() returning a pointer to the AsyncWebServer instance.
 - Updated frontend dependencies and packages to newest version.
 

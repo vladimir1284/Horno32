@@ -63,7 +63,7 @@ Customize the settings as you see fit, for example you might configure your home
 ```ini
   -D FACTORY_WIFI_SSID=\"My\ Awesome\ WiFi\ Network\"
   -D FACTORY_WIFI_PASSWORD=\"secret\"
-  -D FACTORY_WIFI_HOSTNAME=\"awesome_light_controller\"
+  -D FACTORY_WIFI_HOSTNAME=\"awesome_horno_controller\"
 ```
 
 ### Default access point settings

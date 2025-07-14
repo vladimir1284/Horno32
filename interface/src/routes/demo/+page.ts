@@ -36,8 +36,8 @@
 // 					'Content-Type': 'application/json'
 // 				}
 // 			});
-// 			const light = await response.json();
-// 			systemState = light;
+// 			const horno = await response.json();
+// 			systemState = horno;
 // 		} catch (error) {
 // 			console.error('Error:', error);
 // 		}
@@ -96,8 +96,8 @@
 // 	// 		});
 // 	// 		if (response.status == 200) {
 // 	// 			// notifications.success('Light state updated.', 3000);
-// 	// 			const light = await response.json();
-// 	// 			varCmdStop = light.cmdStop;
+// 	// 			const horno = await response.json();
+// 	// 			varCmdStop = horno.cmdStop;
 // 	// 		} else {
 // 	// 			// notifications.error('User not authorized.', 3000);
 // 	// 		}

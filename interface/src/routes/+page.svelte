@@ -7,25 +7,25 @@
 	import { page } from '$app/state';
 	import { notifications } from '$lib/components/toasts/notifications';
 	import { socket } from '$lib/stores/socket';
-	import type { LightState } from '$lib/types/models';
+	import type { HornoState } from '$lib/types/models';
 
-	let lightState: LightState = $state({ led_on: false });
+	let hornoState: HornoState = $state({ led_on: false });
 
-	let lightOn = $state(false);
+	let hornoOn = $state(false);
 
 	async function getLightstate() {
 		try {
-			const response = await fetch('/rest/lightState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
 				headers: {
 					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				}
 			});
-			const light = await response.json();
-			lightOn = light.led_on;
-			value = light.temperature;
-			console.log(light)
+			const horno = await response.json();
+			hornoOn = horno.led_on;
+			value = horno.temperature;
+			console.log(horno)
 		} catch (error) {
 			console.error('Error:', error);
 		}
@@ -33,8 +33,8 @@
 	}
 
 	onMount(() => {
-		socket.on<LightState>('led', (data) => {
-			lightState = data;
+		socket.on<HornoState>('led', (data) => {
+			hornoState = data;
 		});
 	});
 

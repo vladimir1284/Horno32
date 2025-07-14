@@ -12,18 +12,18 @@
  *   the terms of the LGPL v3 license. See the LICENSE file for details.
  **/
 
-#include <LightMqttSettingsService.h>
+#include <HornoMqttSettingsService.h>
 
-LightMqttSettingsService::LightMqttSettingsService(PsychicHttpServer *server,
-                                                   ESP32SvelteKit *sveltekit) : _httpEndpoint(LightMqttSettings::read,
-                                                                                              LightMqttSettings::update,
+HornoMqttSettingsService::HornoMqttSettingsService(PsychicHttpServer *server,
+                                                   ESP32SvelteKit *sveltekit) : _httpEndpoint(HornoMqttSettings::read,
+                                                                                              HornoMqttSettings::update,
                                                                                               this,
                                                                                               server,
                                                                                               LIGHT_BROKER_SETTINGS_PATH,
                                                                                               sveltekit->getSecurityManager(),
                                                                                               AuthenticationPredicates::IS_AUTHENTICATED),
-                                                                                _fsPersistence(LightMqttSettings::read,
-                                                                                               LightMqttSettings::update,
+                                                                                _fsPersistence(HornoMqttSettings::read,
+                                                                                               HornoMqttSettings::update,
                                                                                                this,
                                                                                                sveltekit->getFS(),
                                                                                                LIGHT_BROKER_SETTINGS_FILE),
@@ -35,13 +35,13 @@ LightMqttSettingsService::LightMqttSettingsService(PsychicHttpServer *server,
                      false);
 }
 
-void LightMqttSettingsService::begin()
+void HornoMqttSettingsService::begin()
 {
     _httpEndpoint.begin();
     _fsPersistence.readFromFS();
 }
 
-void LightMqttSettingsService::onConfigUpdated()
+void HornoMqttSettingsService::onConfigUpdated()
 {
     // Notify the MQTT client about the updated configuration
     _mqttSettingsService->setStatusTopic(_state.stateTopic);

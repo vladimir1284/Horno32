@@ -44,13 +44,13 @@ The [StatefulService.h](https://github.com/theelims/ESP32-sveltekit/blob/main/li
 Here is a simple example of a state class and a StatefulService to manage it:
 
 ```cpp
-class LightState {
+class HornoState {
  public:
   bool on = false;
   uint8_t brightness = 255;
 };
 
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
 };
 ```
 
@@ -60,15 +60,15 @@ You may listen for changes to state by registering an update handler callback. I
 
 ```cpp
 // register an update handler
-update_handler_id_t myUpdateHandler = lightStateService.addUpdateHandler(
+update_handler_id_t myUpdateHandler = hornoStateService.addUpdateHandler(
   [&](const String& originId) {
-    Serial.print("The light's state has been updated by: ");
+    Serial.print("The horno's state has been updated by: ");
     Serial.println(originId);
   }
 );
 
 // remove the update handler
-lightStateService.removeUpdateHandler(myUpdateHandler);
+hornoStateService.removeUpdateHandler(myUpdateHandler);
 ```
 
 An "originId" is passed to the update handler which may be used to identify the origin of an update. The default origin values the framework provides are:
@@ -85,14 +85,14 @@ Sometimes if can be desired to hook into every update of an state, even if the S
 
 ```cpp
 // register an update handler
-hook_handler_id_t myHookHandler = lightStateService.addHookHandler(
+hook_handler_id_t myHookHandler = hornoStateService.addHookHandler(
   [&](const String& originId, StateUpdateResult &result) {
-    Serial.printf("The light's state has been updated by: %s with result %d\n", originId, result);
+    Serial.printf("The horno's state has been updated by: %s with result %d\n", originId, result);
   }
 );
 
 // remove the update handler
-lightStateService.removeHookHandler(myHookHandler);
+hornoStateService.removeHookHandler(myHookHandler);
 ```
 
 ### Read & Update State
@@ -100,19 +100,19 @@ lightStateService.removeHookHandler(myHookHandler);
 StatefulService exposes a read function which you may use to safely read the state. This function takes care of protecting against parallel access to the state in multi-core environments such as the ESP32.
 
 ```cpp
-lightStateService.read([&](LightState& state) {
+hornoStateService.read([&](HornoState& state) {
   digitalWrite(LED_PIN, state.on ? HIGH : LOW); // apply the state update to the LED_PIN
 });
 ```
 
-StatefulService also exposes an update function which allows the caller to update the state with a callback. This function automatically calls the registered update handlers if the state has been changed. The example below changes the state of the light (turns it on) using the arbitrary origin "timer" and returns the "CHANGED" state update result, indicating that a change was made:
+StatefulService also exposes an update function which allows the caller to update the state with a callback. This function automatically calls the registered update handlers if the state has been changed. The example below changes the state of the horno (turns it on) using the arbitrary origin "timer" and returns the "CHANGED" state update result, indicating that a change was made:
 
 ```cpp
-lightStateService.update([&](LightState& state) {
+hornoStateService.update([&](HornoState& state) {
    if (state.on) {
-    return StateUpdateResult::UNCHANGED; // lights were already on, return UNCHANGED
+    return StateUpdateResult::UNCHANGED; // hornos were already on, return UNCHANGED
   }
-  state.on = true;  // turn on the lights
+  state.on = true;  // turn on the hornos
   return StateUpdateResult::CHANGED; // notify StatefulService by returning CHANGED
 }, "timer");
 ```
@@ -134,20 +134,20 @@ When reading or updating state from an external source (HTTP, WebSockets, or MQT
 | JsonStateReader  | void read(T& settings, JsonObject& root)                | Reading the state object into a JsonObject                                        |
 | JsonStateUpdater | StateUpdateResult update(JsonObject& root, T& settings) | Updating the state from a JsonObject, returning the appropriate StateUpdateResult |
 
-The static functions below can be used to facilitate the serialization/deserialization of the light state:
+The static functions below can be used to facilitate the serialization/deserialization of the horno state:
 
 ```cpp
-class LightState {
+class HornoState {
  public:
   bool on = false;
   uint8_t brightness = 255;
 
-  static void read(LightState& state, JsonObject& root) {
+  static void read(HornoState& state, JsonObject& root) {
     root["on"] = state.on;
     root["brightness"] = state.brightness;
   }
 
-  static StateUpdateResult update(JsonObject& root, LightState& state) {
+  static StateUpdateResult update(JsonObject& root, HornoState& state) {
     state.on = root["on"] | false;
     state.brightness = root["brightness"] | 255;
     return StateUpdateResult::CHANGED;
@@ -161,27 +161,27 @@ Read the state to a JsonObject using a serializer:
 
 ```cpp
 JsonObject jsonObject = jsonDocument.to<JsonObject>();
-lightStateService->read(jsonObject, LightState::read);
+hornoStateService->read(jsonObject, HornoState::read);
 ```
 
 Update the state from a JsonObject using a deserializer:
 
 ```cpp
 JsonObject jsonObject = jsonDocument.as<JsonObject>();
-lightStateService->update(jsonObject, LightState::update, "timer");
+hornoStateService->update(jsonObject, HornoState::update, "timer");
 ```
 
 ### HTTP RESTful Endpoint
 
 The framework provides an [HttpEndpoint.h](https://github.com/theelims/ESP32-sveltekit/blob/main/lib/framework/HttpEndpoint.h) class which may be used to register GET and POST handlers to read and update the state over HTTP. You may construct an HttpEndpoint as a part of the StatefulService or separately if you prefer.
 
-The code below demonstrates how to extend the LightStateService class to provide an endpoint:
+The code below demonstrates how to extend the HornoStateService class to provide an endpoint:
 
 ```cpp
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
  public:
-  LightStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
-      _httpEndpoint(LightState::read, LightState::update, this, server, "/rest/lightState", sveltekit->getSecurityManager(),AuthenticationPredicates::IS_AUTHENTICATED) {
+  HornoStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
+      _httpEndpoint(HornoState::read, HornoState::update, this, server, "/rest/hornoState", sveltekit->getSecurityManager(),AuthenticationPredicates::IS_AUTHENTICATED) {
   }
 
   void begin(); {
@@ -189,7 +189,7 @@ class LightStateService : public StatefulService<LightState> {
   }
 
  private:
-  HttpEndpoint<LightState> _httpEndpoint;
+  HttpEndpoint<HornoState> _httpEndpoint;
 };
 ```
 
@@ -201,17 +201,17 @@ To register the HTTP endpoints with the web server the function `_httpEndpoint.b
 
 [FSPersistence.h](https://github.com/theelims/ESP32-sveltekit/blob/main/lib/framework/FSPersistence.h) allows you to save state to the filesystem. FSPersistence automatically writes changes to the file system when state is updated. This feature can be disabled by calling `disableUpdateHandler()` if manual control of persistence is required.
 
-The code below demonstrates how to extend the LightStateService class to provide persistence:
+The code below demonstrates how to extend the HornoStateService class to provide persistence:
 
 ```cpp
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
  public:
-  LightStateService(ESP32SvelteKit *sveltekit) :
-      _fsPersistence(LightState::read, LightState::update, this, sveltekit->getFS(), "/config/lightState.json") {
+  HornoStateService(ESP32SvelteKit *sveltekit) :
+      _fsPersistence(HornoState::read, HornoState::update, this, sveltekit->getFS(), "/config/hornoState.json") {
   }
 
  private:
-  FSPersistence<LightState> _fsPersistence;
+  FSPersistence<HornoState> _fsPersistence;
 };
 ```
 
@@ -219,13 +219,13 @@ class LightStateService : public StatefulService<LightState> {
 
 [EventEndpoint.h](https://github.com/theelims/ESP32-sveltekit/blob/main/lib/framework/EventEndpoint.h) wraps the [Event Socket](#event-socket) into an endpoint compatible with a stateful service. The client may subscribe and unsubscribe to this event to receive updates or push updates to the ESP32. The current state is synchronized upon subscription.
 
-The code below demonstrates how to extend the LightStateService class to provide an WebSocket:
+The code below demonstrates how to extend the HornoStateService class to provide an WebSocket:
 
 ```cpp
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
  public:
-  LightStateService(ESP32SvelteKit *sveltekit) :
-      _eventEndpoint(LightState::read, LightState::update, this, sveltekit->getSocket(), "led") {}
+  HornoStateService(ESP32SvelteKit *sveltekit) :
+      _eventEndpoint(HornoState::read, HornoState::update, this, sveltekit->getSocket(), "led") {}
 
   void begin()
   {
@@ -233,7 +233,7 @@ class LightStateService : public StatefulService<LightState> {
   }
 
  private:
-  EventEndpoint<LightState> _eventEndpoint;
+  EventEndpoint<HornoState> _eventEndpoint;
 };
 ```
 
@@ -245,13 +245,13 @@ Since all events run through one websocket connection it is not possible to use 
 
 [WebSocketServer.h](https://github.com/theelims/ESP32-sveltekit/blob/main/lib/framework/WebSocketServer.h) allows you to read and update state over a WebSocket connection. WebSocketServer automatically pushes changes to all connected clients when state is updated.
 
-The code below demonstrates how to extend the LightStateService class to provide an WebSocket:
+The code below demonstrates how to extend the HornoStateService class to provide an WebSocket:
 
 ```cpp
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
  public:
-  LightStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
-      _webSocket(LightState::read, LightState::update, this, server, "/ws/lightState", sveltekit->getSecurityManager(), AuthenticationPredicates::IS_AUTHENTICATED), {
+  HornoStateService(PsychicHttpServer* server, ESP32SvelteKit *sveltekit) :
+      _webSocket(HornoState::read, HornoState::update, this, server, "/ws/hornoState", sveltekit->getSecurityManager(), AuthenticationPredicates::IS_AUTHENTICATED), {
   }
 
   void begin() {
@@ -259,7 +259,7 @@ class LightStateService : public StatefulService<LightState> {
   }
 
  private:
-  WebSocketServer<LightState> _webSocketServer;
+  WebSocketServer<HornoState> _webSocketServer;
 };
 ```
 
@@ -273,30 +273,30 @@ The framework includes an MQTT client which can be configured via the UI. MQTT r
 
 [MqttEndpoint.h](https://github.com/theelims/ESP32-sveltekit/blob/main/lib/framework/MqttEndpoint.h) allows you to publish and subscribe to synchronize state over a pair of MQTT topics. MqttEndpoint automatically pushes changes to the "pub" topic and reads updates from the "sub" topic.
 
-The code below demonstrates how to extend the LightStateService class to interface with MQTT:
+The code below demonstrates how to extend the HornoStateService class to interface with MQTT:
 
 ```cpp
 
-class LightStateService : public StatefulService<LightState> {
+class HornoStateService : public StatefulService<HornoState> {
  public:
-  LightStateService(ESP32SvelteKit *sveltekit) :
-      _mqttEndpoint(LightState::read,
-                  LightState::update,
+  HornoStateService(ESP32SvelteKit *sveltekit) :
+      _mqttEndpoint(HornoState::read,
+                  HornoState::update,
                   this,
                   sveltekit->getMqttClient(),
-                  "homeassistant/light/my_light/set",
-                  "homeassistant/light/my_light/state") {
+                  "homeassistant/horno/my_horno/set",
+                  "homeassistant/horno/my_horno/state") {
   }
 
  private:
-  MqttEndpoint<LightState> _mqttEndpoint;
+  MqttEndpoint<HornoState> _mqttEndpoint;
 };
 ```
 
 You can re-configure the pub/sub topics at runtime as required:
 
 ```cpp
-_mqttEndpoint.configureBroker("homeassistant/light/desk_lamp/set", "homeassistant/light/desk_lamp/state");
+_mqttEndpoint.configureBroker("homeassistant/horno/desk_lamp/set", "homeassistant/horno/desk_lamp/state");
 ```
 
 The demo project allows the user to modify the MQTT topics via the UI so they can be changed without re-flashing the firmware.
@@ -307,7 +307,7 @@ Beside RESTful HTTP Endpoints the Event Socket System provides a convenient comm
 
 ### Message Format
 
-The event messages exchanged between the ESP32 and its clients consists of an "event" head and the "data" payload. For the LightState example a message looks like this in JSON representation:
+The event messages exchanged between the ESP32 and its clients consists of an "event" head and the "data" payload. For the HornoState example a message looks like this in JSON representation:
 
 ```JSON
 {
@@ -396,7 +396,7 @@ server->on("/rest/someService", HTTP_GET,
 In case of a websocket connection the JWT token is supplied as a search parameter in the URL when establishing the connection:
 
 ```
-/ws/lightState?access_token={JWT Token}
+/ws/hornoState?access_token={JWT Token}
 ```
 
 ## Placeholder substitution
@@ -412,10 +412,10 @@ Various settings support placeholder substitution, indicated by comments in [fac
 You may use SettingValue::format in your own code if you require the use of these placeholders. This is demonstrated in the demo project:
 
 ```cpp
-  static StateUpdateResult update(JsonObject& root, LightMqttSettings& settings) {
-    settings.mqttPath = root["mqtt_path"] | SettingValue::format("homeassistant/light/#{unique_id}");
-    settings.name = root["name"] | SettingValue::format("light-#{unique_id}");
-    settings.uniqueId = root["unique_id"] | SettingValue::format("light-#{unique_id}");
+  static StateUpdateResult update(JsonObject& root, HornoMqttSettings& settings) {
+    settings.mqttPath = root["mqtt_path"] | SettingValue::format("homeassistant/horno/#{unique_id}");
+    settings.name = root["name"] | SettingValue::format("horno-#{unique_id}");
+    settings.uniqueId = root["unique_id"] | SettingValue::format("horno-#{unique_id}");
     return StateUpdateResult::CHANGED;
   }
 ```
@@ -527,7 +527,7 @@ In addition it is possible to change this as well at runtime by calling:
 esp32sveltekit.getSleepService()->setWakeUpPin(int pin, bool level, pinTermination termination = pinTermination::FLOATING);
 ```
 
-With this function it is also possible to configure the internal pull-up or pull-down resistor for this RTC pin. Albeit this might increase the deep sleep current slightly.
+With this function it is also possible to configure the internal pull-up or pull-down resistor for this RTC pin. Albeit this might increase the deep sleep current shornoly.
 
 A callback function can be attached and triggers when the ESP32 is requested to go into deep sleep. This allows you to safely deal with the power down event. Like persisting software state by writing to the flash, tiding up or notify a remote server about the immanent disappearance.
 

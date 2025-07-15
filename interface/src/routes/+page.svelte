@@ -61,6 +61,7 @@
 			getLightstate();
 		}, 5000);
 		// varCmdStop = false;
+		getLightstate();
 	});
 </script>
 

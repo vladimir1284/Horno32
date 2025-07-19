@@ -97,10 +97,10 @@ public:
 private:
     HttpEndpoint<HornoState> _httpEndpoint;
     EventEndpoint<HornoState> _eventEndpoint;
-    MqttEndpoint<HornoState> _mqttEndpoint;
+    // MqttEndpoint<HornoState> _mqttEndpoint;
     WebSocketServer<HornoState> _webSocketServer;
-    PsychicMqttClient *_mqttClient;
-    HornoMqttSettingsService *_hornoMqttSettingsService;
+    // PsychicMqttClient *_mqttClient;
+    // HornoMqttSettingsService *_hornoMqttSettingsService;
 
     void registerConfig();
     void onConfigUpdated();

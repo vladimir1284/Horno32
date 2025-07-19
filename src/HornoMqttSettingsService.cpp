@@ -26,8 +26,7 @@ HornoMqttSettingsService::HornoMqttSettingsService(PsychicHttpServer *server,
                                                                                                HornoMqttSettings::update,
                                                                                                this,
                                                                                                sveltekit->getFS(),
-                                                                                               LIGHT_BROKER_SETTINGS_FILE),
-                                                                                _mqttSettingsService(sveltekit->getMqttSettingsService())
+                                                                                               LIGHT_BROKER_SETTINGS_FILE)
 {
     // configure settings service update handler to update LED state
     addUpdateHandler([&](const String &originId)
@@ -44,7 +43,7 @@ void HornoMqttSettingsService::begin()
 void HornoMqttSettingsService::onConfigUpdated()
 {
     // Notify the MQTT client about the updated configuration
-    _mqttSettingsService->setStatusTopic(_state.stateTopic);
+    // _mqttSettingsService->setStatusTopic(_state.stateTopic);
 
     // Optionally, you can also log or handle the updated configuration here
     ESP_LOGI(LIGHT_TAG, "MQTT Configuration updated");

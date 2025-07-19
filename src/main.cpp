@@ -14,6 +14,7 @@
 
 #include <ESP32SvelteKit.h>
 #include <HornoMqttSettingsService.h>
+#include <HornoSettingsService.h>
 #include <HornoStateService.h>
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
@@ -55,10 +56,12 @@ ESP32SvelteKit esp32sveltekit(&server, 120);
 HornoMqttSettingsService hornoMqttSettingsService = HornoMqttSettingsService(&server,
                                                                              &esp32sveltekit);
 
+HornoSettingsService hornoSettingsService = HornoSettingsService(&server,
+                                                                 &esp32sveltekit);
+
 HornoStateService hornoStateService = HornoStateService(&server,
                                                         &esp32sveltekit,
                                                         &hornoMqttSettingsService);
-
 
 void updateScreen(void *pvParameters)
 {
@@ -92,7 +95,12 @@ void setup()
     // load the initial horno settings
     hornoStateService.begin();
     // start the horno service
-    hornoMqttSettingsService.begin(); // Display markers as a part of the startup sequence
+    hornoMqttSettingsService.begin(); 
+
+    // start the horno settings service
+    hornoSettingsService.begin(); 
+    
+    // Display markers as a part of the startup sequence
 
     // Initialize the LCD with the backhorno control
     lcd.begin(csPin, wrPin, dataPin);

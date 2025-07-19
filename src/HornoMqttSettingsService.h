@@ -66,7 +66,7 @@ public:
 private:
     HttpEndpoint<HornoMqttSettings> _httpEndpoint;
     FSPersistence<HornoMqttSettings> _fsPersistence;
-    MqttSettingsService *_mqttSettingsService;
+    // MqttSettingsService *_mqttSettingsService;
 };
 
 #endif // end HornoMqttSettingsService_h

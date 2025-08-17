@@ -29,17 +29,17 @@ The [Event Socket System](statefulservice.md#event-socket) is conveniently provi
 ```ts
 import { socket } from "$lib/stores/socket";
 
-let lightState: LightState = { led_on: false };
+let hornoState: HornoState = { led_on: false };
 
 onMount(() => {
-  socket.on<LightState>("led", (data) => {
-    lightState = data;
+  socket.on<HornoState>("led", (data) => {
+    hornoState = data;
   });
 });
 
 onDestroy(() => socket.off("led"));
 
-socket.sendEvent("led", lightState);
+socket.sendEvent("led", hornoState);
 ```
 
 Subscribing to an invalid event will only create a warning in the ESP_LOG on the serial console of the ESP32.

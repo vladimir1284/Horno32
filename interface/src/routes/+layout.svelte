@@ -4,44 +4,47 @@
 	import { user } from '$lib/stores/user';
 	import { telemetry } from '$lib/stores/telemetry';
 	import { analytics } from '$lib/stores/analytics';
+	import { batteryHistory } from '$lib/stores/battery';
 	import { socket } from '$lib/stores/socket';
 	import type { userProfile } from '$lib/stores/user';
-	import { page } from '$app/stores';
-	import { Modals, closeModal } from 'svelte-modals';
+	import { page } from '$app/state';
+	import { Modals, modals } from 'svelte-modals';
 	import Toast from '$lib/components/toasts/Toast.svelte';
 	import { notifications } from '$lib/components/toasts/notifications';
 	import { fade } from 'svelte/transition';
 	import '../app.css';
-	import Menu from '$lib/components/old-project-components/menu.svelte';
-	import Statusbar from '$lib/components/old-project-components/statusbar.svelte';
-	import Login from '$lib/components/old-project-components/login.svelte';
+	import Menu from './menu.svelte';
+	import Statusbar from './statusbar.svelte';
+	import Login from './login.svelte';
 	import type { Analytics } from '$lib/types/models';
 	import type { RSSI } from '$lib/types/models';
 	import type { Battery } from '$lib/types/models';
 	import type { DownloadOTA } from '$lib/types/models';
 
-	export let data: LayoutData;
+	interface Props {
+		data: LayoutData;
+		children?: import('svelte').Snippet;
+	}
 
-	import Header from './Header.svelte';
-	import './styles.css';
-
+	let { data, children }: Props = $props();
+	//import './styles.css';
 	onMount(async () => {
 		if ($user.bearer_token !== '') {
 			await validateUser($user);
 		}
-		const ws_token = $page.data.features.security ? '?access_token=' + $user.bearer_token : '';
+		if (!(page.data.features.security && $user.bearer_token === '')) {
+			initSocket();
+		}
+	});
+
+	const initSocket = () => {
+		const ws_token = page.data.features.security ? '?access_token=' + $user.bearer_token : '';
 		socket.init(
 			`ws://${window.location.host}/ws/events${ws_token}`,
-			$page.data.features.event_use_json
+			page.data.features.event_use_json
 		);
 		addEventListeners();
-		const element0 = document.getElementById('connect0');
-		if (element0) element0.hidden = true;
-		const element1 = document.getElementById('connect1');
-		if (element1) element1.hidden = true;
-		const element2 = document.getElementById('connect2');
-		if (element2) element2.hidden = true;
-	});
+	};
 
 	onDestroy(() => {
 		removeEventListeners();
@@ -53,9 +56,9 @@
 		socket.on('error', handleError);
 		socket.on('rssi', handleNetworkStatus);
 		socket.on('notification', handleNotification);
-		if ($page.data.features.analytics) socket.on('analytics', handleAnalytics);
-		if ($page.data.features.battery) socket.on('battery', handleBattery);
-		if ($page.data.features.download_firmware) socket.on('otastatus', handleOAT);
+		if (page.data.features.analytics) socket.on('analytics', handleAnalytics);
+		if (page.data.features.battery) socket.on('battery', handleBattery);
+		if (page.data.features.download_firmware) socket.on('otastatus', handleOAT);
 	};
 
 	const removeEventListeners = () => {
@@ -86,11 +89,11 @@
 	}
 
 	const handleOpen = () => {
-		notifications.success('Connection to device established', 2000);
+		notifications.success('Connection to device established', 5000);
 	};
 
 	const handleClose = () => {
-		notifications.error('Connection to device lost', 2000);
+		notifications.error('Connection to device lost', 5000);
 		telemetry.setRSSI({ rssi: 0, ssid: '' });
 	};
 
@@ -99,16 +102,16 @@
 	const handleNotification = (data: any) => {
 		switch (data.type) {
 			case 'info':
-				notifications.info(data.message, 2000);
+				notifications.info(data.message, 5000);
 				break;
 			case 'warning':
-				notifications.warning(data.message, 2000);
+				notifications.warning(data.message, 5000);
 				break;
 			case 'error':
-				notifications.error(data.message, 2000);
+				notifications.error(data.message, 5000);
 				break;
 			case 'success':
-				notifications.success(data.message, 2000);
+				notifications.success(data.message, 5000);
 				break;
 			default:
 				break;
@@ -119,79 +122,53 @@
 
 	const handleNetworkStatus = (data: RSSI) => telemetry.setRSSI(data);
 
-	const handleBattery = (data: Battery) => telemetry.setBattery(data);
+	const handleBattery = (data: Battery) => {
+		telemetry.setBattery(data);
+		batteryHistory.addData(data);
+	};
 
 	const handleOAT = (data: DownloadOTA) => telemetry.setDownloadOTA(data);
 
-	let menuOpen = false;
+	let menuOpen = $state(false);
 </script>
 
 <svelte:head>
-	<title>{$page.data.title}</title>
+	<title>{page.data.title}</title>
 </svelte:head>
 
-{#if $page.data.features.security && $user.bearer_token === ''}
-	<Login />
+{#if page.data.features.security && $user.bearer_token === ''}
+	<Login on:signIn={initSocket} />
 {:else}
-	<!-- <div class="drawer lg:drawer-open"> -->
-	<!-- <input id="main-menu" type="checkbox" class="drawer-toggle" bind:checked={menuOpen} /> -->
-	<!-- <div class="drawer-content flex flex-col"> -->
-	<!-- Status bar content here -->
-	<!-- <Statusbar /> -->
+	<div class="drawer lg:drawer-open">
+		<input id="main-menu" type="checkbox" class="drawer-toggle" bind:checked={menuOpen} />
+		<div class="drawer-content flex flex-col">
+			<!-- Status bar content here -->
+			<Statusbar />
 
-	<!-- Main page content here -->
-	<!-- <slot /> -->
-	<!-- </div> -->
-	<!-- Side Navigation -->
-	<!-- <div class="drawer-side z-30 shadow-lg">
-			<label for="main-menu" class="drawer-overlay" />
+			<!-- Main page content here -->
+			{@render children?.()}
+		</div>
+		<!-- Side Navigation -->
+		<div class="drawer-side z-30 shadow-lg">
+			<label for="main-menu" class="drawer-overlay"></label>
 			<Menu
-				on:menuClicked={() => {
+				closeMenu={() => {
 					menuOpen = false;
 				}}
 			/>
-		</div> -->
-	<!-- </div> -->
-
-	<div class="app">
-		<Header />
-
-		<main>
-			<slot />
-		</main>
+		</div>
 	</div>
 {/if}
 
-<!-- <Modals> -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- <div -->
-<!-- slot="backdrop" -->
-<!-- class="fixed inset-0 z-40 max-h-full max-w-full bg-black/20 backdrop-blur" -->
-<!-- transition:fade -->
-<!-- on:click={closeModal} -->
-<!-- /> -->
-<!-- </Modals> -->
+<Modals>
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	{#snippet backdrop({ close })}
+		<div
+			class="fixed inset-0 z-40 max-h-full max-w-full bg-black/20 backdrop-blur-sm"
+			transition:fade|global
+			onclick={() => close()}
+		></div>
+	{/snippet}
+</Modals>
 
 <Toast />
-
-<style>
-	.app {
-		display: flex;
-		flex-direction: column;
-		height: 100vh; /* Set the height of the app container to full viewport height */
-		min-height: 100vh;
-	}
-
-	main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		width: 100%;
-		max-width: 64rem;
-		margin: 0 auto;
-		box-sizing: border-box;
-		overflow-y: auto; /* Enable vertical scrolling for the main element */
-		padding: 0;
-	}
-</style>

@@ -202,8 +202,8 @@ def main():
     status('Successfully created %s' % output_file)
 
 
-# try:
-#     main()
-# except InputError as e:
-#     print(e)
-#     sys.exit(2)
+try:
+    main()
+except InputError as e:
+    print(e)
+    sys.exit(2)

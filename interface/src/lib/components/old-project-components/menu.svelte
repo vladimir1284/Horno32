@@ -44,13 +44,6 @@
 
 	let menuItems = [
 		{
-			title: 'Demo App',
-			icon: Control,
-			href: '/demo',
-			feature: true,
-			
-		},
-		{
 			title: 'Connections',
 			icon: Remote,
 			feature: $page.data.features.mqtt || $page.data.features.ntp,
@@ -59,15 +52,13 @@
 					title: 'MQTT',
 					icon: MQTT,
 					href: '/connections/mqtt',
-					feature: $page.data.features.mqtt,
-					
+					feature: $page.data.features.mqtt
 				},
 				{
 					title: 'NTP',
 					icon: NTP,
 					href: '/connections/ntp',
-					feature: $page.data.features.ntp,
-					
+					feature: $page.data.features.ntp
 				}
 			]
 		},
@@ -80,15 +71,13 @@
 					title: 'WiFi Station',
 					icon: Router,
 					href: '/wifi/sta',
-					feature: true,
-					
+					feature: true
 				},
 				{
 					title: 'Access Point',
 					icon: AP,
 					href: '/wifi/ap',
-					feature: true,
-					
+					feature: true
 				}
 			]
 		},
@@ -96,8 +85,7 @@
 			title: 'Users',
 			icon: Users,
 			href: '/user',
-			feature: $page.data.features.security && $user.admin,
-			
+			feature: $page.data.features.security && $user.admin
 		},
 		{
 			title: 'System',
@@ -108,15 +96,13 @@
 					title: 'System Status',
 					icon: Health,
 					href: '/system/status',
-					feature: true,
-					
+					feature: true
 				},
 				{
 					title: 'System Metrics',
 					icon: Metrics,
 					href: '/system/metrics',
-					feature: $page.data.features.analytics,
-					
+					feature: $page.data.features.analytics
 				},
 				{
 					title: 'Firmware Update',
@@ -126,7 +112,7 @@
 						($page.data.features.ota ||
 							$page.data.features.upload_firmware ||
 							$page.data.features.download_firmware) &&
-						(!$page.data.features.security || $user.admin),
+						(!$page.data.features.security || $user.admin)
 				}
 			]
 		}
@@ -135,13 +121,13 @@
 	const dispatch = createEventDispatcher();
 
 	function setActiveMenuItem(targetTitle: string) {
-		menuItems.forEach(item => {
+		menuItems.forEach((item) => {
 			item.active = item.title === targetTitle;
-			item.submenu?.forEach(subItem => {
+			item.submenu?.forEach((subItem) => {
 				subItem.active = subItem.title === targetTitle;
 			});
 		});
-		menuItems = menuItems
+		menuItems = menuItems;
 		dispatch('menuClicked');
 	}
 

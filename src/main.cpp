@@ -13,6 +13,9 @@
  **/
 
 #include <ESP32SvelteKit.h>
+#include <HornoMqttSettingsService.h>
+#include <HornoSettingsService.h>
+#include <HornoStateService.h>
 #include <PsychicHttpServer.h>
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
@@ -50,17 +53,15 @@ PsychicHttpServer server;
 
 ESP32SvelteKit esp32sveltekit(&server, 120);
 
-void blinkLED(void *pvParameters)
-{
-    pinMode(LED_BUILTIN, OUTPUT);
-    while (true)
-    {
-        digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on
-        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
-        digitalWrite(LED_BUILTIN, LOW);  // Turn the LED off
-        vTaskDelay(pdMS_TO_TICKS(500));  // Wait for 500 ms
-    }
-}
+HornoMqttSettingsService hornoMqttSettingsService = HornoMqttSettingsService(&server,
+                                                                             &esp32sveltekit);
+
+HornoSettingsService hornoSettingsService = HornoSettingsService(&server,
+                                                                 &esp32sveltekit);
+
+HornoStateService hornoStateService = HornoStateService(&server,
+                                                        &esp32sveltekit,
+                                                        &hornoMqttSettingsService);
 
 void updateScreen(void *pvParameters)
 {
@@ -70,6 +71,7 @@ void updateScreen(void *pvParameters)
         Serial.print(thermocouple.readCelsius());
         Serial.print(", ");
         Serial.println(tempSensor.getValue());
+        hornoStateService.setTemp(thermocouple.readCelsius());
         vTaskDelay(pdMS_TO_TICKS(500)); // Wait for 500 ms
     }
 }
@@ -82,24 +84,30 @@ void readTemp(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(250)); // Wait for 500 ms
     }
 }
-
 void setup()
 {
-    // initialize serial
-    // Serial.begin(SERIAL_BAUD_RATE);
+    // start serial and filesystem
+    Serial.begin(SERIAL_BAUD_RATE);
 
     // start ESP32-SvelteKit
     esp32sveltekit.begin();
 
-    Serial.println("HT1621 Demo Starting...");
+    // load the initial horno settings
+    hornoStateService.begin();
+    // start the horno service
+    hornoMqttSettingsService.begin(); 
 
-    // Initialize the LCD with the backlight control
+    // start the horno settings service
+    hornoSettingsService.begin(); 
+    
+    // Display markers as a part of the startup sequence
+
+    // Initialize the LCD with the backhorno control
     lcd.begin(csPin, wrPin, dataPin);
 
     // Clear the screen
     lcd.clear();
 
-    // Display markers as a part of the startup sequence
     lcd.setMarker(USB);
     delay(500);
     lcd.setMarker(CH51);
@@ -111,16 +119,16 @@ void setup()
 
     Serial.println("Setup complete.");
 
-    ESP_LOGV("LEDTask", "Starting LED blink task");
-    xTaskCreatePinnedToCore(
-        blinkLED,               // Function that should be called
-        "LED Blink Task",       // Name of the task (for debugging)
-        2048,                   // Stack size (bytes)
-        NULL,                   // Pass no parameters
-        (tskIDLE_PRIORITY + 10), // Task priority
-        NULL,                   // Task handle
-        1                       // Pin to core 1 (or 0 if preferred)
-    );
+    // ESP_LOGV("LEDTask", "Starting LED blink task");
+    // xTaskCreatePinnedToCore(
+    //     blinkLED,               // Function that should be called
+    //     "LED Blink Task",       // Name of the task (for debugging)
+    //     2048,                   // Stack size (bytes)
+    //     NULL,                   // Pass no parameters
+    //     (tskIDLE_PRIORITY + 10), // Task priority
+    //     NULL,                   // Task handle
+    //     1                       // Pin to core 1 (or 0 if preferred)
+    // );
     xTaskCreatePinnedToCore(
         updateScreen,           // Function that should be called
         "Update Screen",        // Name of the task (for debugging)
@@ -143,5 +151,6 @@ void setup()
 
 void loop()
 {
-
+    // Delete Arduino loop task, as it is not needed in this example
+    vTaskDelete(NULL);
 }

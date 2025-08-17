@@ -1,11 +1,39 @@
 <script>
+	import { page } from '$app/state';
+	import { user } from '$lib/stores/user';
+
 	let modo = 'automatico';
 
 	let temperatura = 180;
 	let potenciaSuperior = 50;
 	let potenciaInferior = 50;
 
+	let hornoOn = 'true';
+
+	async function postLightstate() {
+		try {
+			const response = await fetch('/rest/hornoState', {
+				method: 'POST',
+				headers: {
+					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ led_on: hornoOn=='true'?0:1 })
+			});
+			if (response.status == 200) {
+				notifications.success('Light state updated.', 3000);
+				const horno = await response.json();
+				hornoOn = horno.led_on;
+			} else {
+				notifications.error('User not authorized.', 3000);
+			}
+		} catch (error) {
+			console.error('Error:', error);
+		}
+	}
+
 	const confirmarAutomatico = () => {
+		postLightstate();
 		console.log(`Temperatura automática establecida en ${temperatura}°C`);
 	};
 
@@ -63,7 +91,7 @@
 <style>
 	.contenedor {
 		max-width: 400px;
-		margin: 10px auto;
+		margin: 0;
 		padding: 20px;
 		background: #ffffff1e;
 		border-radius: 12px;
@@ -120,7 +148,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 10px;
+		gap: 0;
 	}
 
 	input[type='range'] {

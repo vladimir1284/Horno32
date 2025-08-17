@@ -1,165 +1,102 @@
-<!-- <script lang="ts">
-	import type { PageData } from '../$types';
-	import Demo from './Demo.svelte';
-
-	export let data: PageData;
-</script>
-
-<div
-	class="mx-0 my-1 flex flex-col space-y-4
-     sm:mx-8 sm:my-8"
->
-	<Demo />
-</div> -->
-
 <script lang="ts">
-	// import Ampmeter from "./Ampmeter.svelte";
-
+	import type { PageData } from './$types';
 	import { onMount, onDestroy } from 'svelte';
-	import { user } from '$lib/stores/user';
-	import { page } from '$app/stores';
-	import { notifications } from '$lib/components/toasts/notifications';
-	import Gauge from '$lib/components/gauge.svelte';
-	import { socket } from '$lib/stores/socket';
-	import type { systemState } from '$lib/types/models';
-
+	import Gauge from '$lib/components/panel-components/Voltmeter.svelte';
 	import Controller from '$lib/components/Controller.svelte';
+	import { user } from '$lib/stores/user';
+	import { page } from '$app/state';
+	import { notifications } from '$lib/components/toasts/notifications';
+	import { socket } from '$lib/stores/socket';
+	import type { HornoState } from '$lib/types/models';
 
-	let systemState = {
-		modbusErrors: 0,
-		modbusFails: 0,
-		modbusState: false
-	};
-	let value = 180;
+	let hornoState: HornoState = $state({ led_on: false });
 
-	let timeStopButtonPressed = 8000;
+	let hornoOn = $state(false);
 
-	$: varCmdStop = false;
-
-	$: ledStatus = [false, false, false, false, false, false, false, false, false, false];
-
-	let isSocketConnected = false;
-	let timeout: string | number | NodeJS.Timeout | undefined;
-
-	async function getsystemState() {
+	async function getLightstate() {
 		try {
-			const response = await fetch('/rest/systemState', {
+			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
 				headers: {
-					Authorization: $page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
+					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				}
 			});
-			const light = await response.json();
-			systemState = light;
+			const horno = await response.json();
+			hornoOn = horno.led_on;
+			value = horno.temperature;
+			console.log(horno)
 		} catch (error) {
 			console.error('Error:', error);
 		}
 		return;
 	}
 
-	// function requestData() {
-	// 	if (!isSocketConnected) {
-	// 		getsystemState();
-	// 	}
-	// 	isSocketConnected = false;
-	// 	timeout = setTimeout(requestData, 2500);
-	// }
+	onMount(() => {
+		socket.on<HornoState>('led', (data) => {
+			hornoState = data;
+		});
+	});
+
+	onDestroy(() => socket.off('led'));
+
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+	let value = $state(180);
+
 	function getRandomNumber(min: number, max: number) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
+
 	onMount(() => {
-		socket.on<systemState>('led', (merterData) => {
-			// systemState = merterData;
-			isSocketConnected = true;
-		});
+		// socket.on<systemState>('led', (merterData) => {
+		// 	// systemState = merterData;
+		// 	isSocketConnected = true;
+		// });
 		// timeout = setTimeout(requestData, 500);
 		const interval = setInterval(() => {
-			value = getRandomNumber(30, 350);
+			getLightstate();
 		}, 5000);
-		varCmdStop = false;
+		// varCmdStop = false;
+		getLightstate();
 	});
-
-	onDestroy(() => {
-		socket.off('led');
-		clearTimeout(timeout);
-	});
-
-	function offCmdStop() {
-		varCmdStop = false;
-		// postsystemState();
-	}
-
-	function handleCmdStop() {
-		if (!varCmdStop) {
-			varCmdStop = true; // Cambia el estado
-			setTimeout(offCmdStop, timeStopButtonPressed);
-			// postsystemState();
-		}
-	}
-
-	// async function postsystemState() {
-	// 	try {
-	// 		const response = await fetch('/rest/systemState', {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				Authorization: $page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
-	// 				'Content-Type': 'application/json'
-	// 			},
-	// 			body: JSON.stringify({ cmdStop: varCmdStop })
-	// 		});
-	// 		if (response.status == 200) {
-	// 			// notifications.success('Light state updated.', 3000);
-	// 			const light = await response.json();
-	// 			varCmdStop = light.cmdStop;
-	// 		} else {
-	// 			// notifications.error('User not authorized.', 3000);
-	// 		}
-	// 	} catch (error) {
-	// 		console.error('Error:', error);
-	// 	}
-	// }
 </script>
 
-<!-- VoltMeter and frequencyMeter -->
-<!-- <div class="container"> -->
-<!-- <Voltmeter
-		magnitude={mag}
-		svgWidth={140}
-		svgHeight={140}
-		{varName}
-		{units}
-		needleColor={selected}
-		maxScale={max}
-	/>
-	<Freqmeter
-		magnitude={f}
-		svgWidth={140}
-		svgHeight={140}
-		units={['Hz', 'RPM']}
-		minScale={45}
-		maxScale={70}
-		scaleLargeDivisions={5}
-		scaleSmallDivisions={25}
-		decimalPlaces={1}
-		needleColor="gray"
-	/>
-</div> -->
-
-<!-- instruments -->
-<div class="car-instruments">
-	<Gauge {value} />
-	<Controller />
+<div class="hero bg-base-100 h-screen flex items-center justify-center">
+	<div class="card p-0 md:card-side shadow-primary shadow-2xl">
+		<div class="car-instruments">
+			<Gauge
+				svgWidth={300}
+				svgHeight={300}
+				magnitude={value}
+				minScale={30}
+				maxScale={350}
+				scaleSmallDivisions={64}
+				scaleLargeDivisions={8}
+				units="°C"
+				decimalPlaces={1}
+				needleColor="red"
+				varName="T"
+			/>
+			<Controller />
+		</div>
+	</div>
 </div>
 
 <style>
 	.car-instruments {
-		display: flex; /* Use Flexbox to arrange elements side by side */
-		margin-top: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0;
+		padding: 0;
 	}
 	@media (max-width: 640px) {
 		.car-instruments {
-			flex-direction: column; /* Stack elements vertically on smaller screens */
+			flex-direction: column;
 		}
 	}
 </style>

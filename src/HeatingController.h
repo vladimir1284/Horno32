@@ -12,7 +12,7 @@
 // I²t Protection Configuration
 #define I2T_WINDOW_SIZE         120      // Sliding window size in seconds
 #define I2T_SAMPLE_INTERVAL     1000     // Sample interval in milliseconds
-#define MAX_I2T_VALUE           3600.0   // Maximum I²t value (adjust based on resistor specs)
+#define MAX_I2T_VALUE           200000.0 // Maximum I²t value (adjust based on resistor specs)
 #define POWER_REDUCTION_FACTOR  0.95     // Factor to reduce power when approaching limits
 
 // Temperature compensation

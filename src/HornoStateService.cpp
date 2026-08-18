@@ -63,20 +63,40 @@ void HornoStateService::begin()
 {
     _httpEndpoint.begin();
     _eventEndpoint.begin();
-    _state.ledOn = DEFAULT_LED_STATE;
+    _state.on = DEFAULT_ON_STATE;
+    _state.mode = DEFAULT_MODE;
+    _state.setpoint = 0;
+    _state.manualPowerTop = 0;
+    _state.manualPowerBottom = 0;
     _state.temperature = 0;
+    _state.actualPowerTop = 0;
+    _state.actualPowerBottom = 0;
+    _state.hardMaxDutyTop = 0;
+    _state.hardMaxDutyBottom = 0;
     onConfigUpdated();
 }
 
 void HornoStateService::onConfigUpdated()
 {
-    digitalWrite(LED_BUILTIN, _state.ledOn ? 1 : 0);
+    digitalWrite(LED_BUILTIN, _state.on ? 1 : 0);
 }
 
 void HornoStateService::setTemp(float temp)
-    {
-        _state.temperature = temp;
-    }
+{
+    _state.temperature = temp;
+}
+
+void HornoStateService::setActualPower(float top, float bottom)
+{
+    _state.actualPowerTop = top;
+    _state.actualPowerBottom = bottom;
+}
+
+void HornoStateService::setHardMaxDuty(float top, float bottom)
+{
+    _state.hardMaxDutyTop = top;
+    _state.hardMaxDutyBottom = bottom;
+}
 
 void HornoStateService::registerConfig()
 {

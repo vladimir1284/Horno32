@@ -9,11 +9,20 @@
 	import { socket } from '$lib/stores/socket';
 	import type { HornoState } from '$lib/types/models';
 
-	let hornoState: HornoState = $state({ led_on: false });
+	let hornoState: HornoState = $state({
+		on: false,
+		mode: 'auto',
+		setpoint: 0,
+		manual_power_top: 0,
+		manual_power_bottom: 0,
+		temperature: 0,
+		actual_power_top: 0,
+		actual_power_bottom: 0,
+		hard_max_duty_top: 0,
+		hard_max_duty_bottom: 0
+	});
 
-	let hornoOn = $state(false);
-
-	async function getLightstate() {
+	async function getHornoState() {
 		try {
 			const response = await fetch('/rest/hornoState', {
 				method: 'GET',
@@ -22,46 +31,31 @@
 					'Content-Type': 'application/json'
 				}
 			});
-			const horno = await response.json();
-			hornoOn = horno.led_on;
-			value = horno.temperature;
-			console.log(horno)
+			hornoState = await response.json();
 		} catch (error) {
 			console.error('Error:', error);
 		}
-		return;
 	}
 
 	onMount(() => {
-		socket.on<HornoState>('led', (data) => {
+		socket.on<HornoState>('horno', (data) => {
 			hornoState = data;
 		});
 	});
 
-	onDestroy(() => socket.off('led'));
+	onDestroy(() => socket.off('horno'));
 
 	interface Props {
 		data: PageData;
 	}
 
 	let { data }: Props = $props();
-	let value = $state(180);
-
-	function getRandomNumber(min: number, max: number) {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	}
 
 	onMount(() => {
-		// socket.on<systemState>('led', (merterData) => {
-		// 	// systemState = merterData;
-		// 	isSocketConnected = true;
-		// });
-		// timeout = setTimeout(requestData, 500);
 		const interval = setInterval(() => {
-			getLightstate();
+			getHornoState();
 		}, 5000);
-		// varCmdStop = false;
-		getLightstate();
+		getHornoState();
 	});
 </script>
 
@@ -71,7 +65,7 @@
 			<Gauge
 				svgWidth={300}
 				svgHeight={300}
-				magnitude={value}
+				magnitude={hornoState.temperature}
 				minScale={30}
 				maxScale={350}
 				scaleSmallDivisions={64}
@@ -81,7 +75,7 @@
 				needleColor="red"
 				varName="T"
 			/>
-			<Controller />
+			<Controller {hornoState} onUpdated={(updated) => (hornoState = updated)} />
 		</div>
 	</div>
 </div>

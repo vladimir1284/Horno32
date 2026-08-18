@@ -1,16 +1,22 @@
-<script>
+<script lang="ts">
 	import { page } from '$app/state';
 	import { user } from '$lib/stores/user';
+	import { notifications } from '$lib/components/toasts/notifications';
+	import type { HornoState } from '$lib/types/models';
 
-	let modo = 'automatico';
+	interface Props {
+		hornoState: HornoState;
+		onUpdated: (state: HornoState) => void;
+	}
 
-	let temperatura = 180;
-	let potenciaSuperior = 50;
-	let potenciaInferior = 50;
+	let { hornoState, onUpdated }: Props = $props();
 
-	let hornoOn = 'true';
+	let modo = $state(hornoState.mode);
+	let temperatura = $state(hornoState.setpoint);
+	let potenciaSuperior = $state(hornoState.manual_power_top);
+	let potenciaInferior = $state(hornoState.manual_power_bottom);
 
-	async function postLightstate() {
+	async function postHornoState(partial: Partial<HornoState>) {
 		try {
 			const response = await fetch('/rest/hornoState', {
 				method: 'POST',
@@ -18,12 +24,11 @@
 					Authorization: page.data.features.security ? 'Bearer ' + $user.bearer_token : 'Basic',
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ led_on: hornoOn=='true'?0:1 })
+				body: JSON.stringify(partial)
 			});
 			if (response.status == 200) {
-				notifications.success('Light state updated.', 3000);
-				const horno = await response.json();
-				hornoOn = horno.led_on;
+				const updated: HornoState = await response.json();
+				onUpdated(updated);
 			} else {
 				notifications.error('User not authorized.', 3000);
 			}
@@ -32,22 +37,33 @@
 		}
 	}
 
+	const toggleOn = () => {
+		postHornoState({ on: !hornoState.on });
+	};
+
 	const confirmarAutomatico = () => {
-		postLightstate();
-		console.log(`Temperatura automática establecida en ${temperatura}°C`);
+		postHornoState({ mode: 'auto', setpoint: temperatura });
 	};
 
 	const aplicarManual = () => {
-		console.log(`Manual - Superior: ${potenciaSuperior}%, Inferior: ${potenciaInferior}%`);
+		postHornoState({
+			mode: 'manual',
+			manual_power_top: potenciaSuperior,
+			manual_power_bottom: potenciaInferior
+		});
 	};
 </script>
 
 <div class="contenedor">
-	<h2>Modo de Control del Horno</h2>
+	<h2>Control del Horno</h2>
+
+	<button class="power-toggle" class:on={hornoState.on} on:click={toggleOn}>
+		{hornoState.on ? 'Apagar' : 'Encender'}
+	</button>
 
 	<div class="modo">
 		<label>
-			<input type="radio" bind:group={modo} value="automatico" />
+			<input type="radio" bind:group={modo} value="auto" />
 			<span>Automático</span>
 		</label>
 		<label>
@@ -56,7 +72,7 @@
 		</label>
 	</div>
 
-	{#if modo === 'automatico'}
+	{#if modo === 'auto'}
 		<div>
 			<div class="campo">
 				<label for="temperatura">Temperatura (°C):</label>
@@ -86,6 +102,16 @@
 			<button on:click={aplicarManual}> Aplicar Configuración Manual </button>
 		</div>
 	{/if}
+
+	<div class="potencia-actual">
+		<span>Potencia real - Superior: {hornoState.actual_power_top.toFixed(0)}%</span>
+		<span>Potencia real - Inferior: {hornoState.actual_power_bottom.toFixed(0)}%</span>
+		<span class="tope">
+			Tope de seguridad (fijo): Superior {hornoState.hard_max_duty_top.toFixed(0)}% / Inferior {hornoState.hard_max_duty_bottom.toFixed(
+				0
+			)}%
+		</span>
+	</div>
 </div>
 
 <style>
@@ -184,5 +210,29 @@
 
 	.num-input {
 		background-color: white;
+	}
+
+	.power-toggle {
+		background-color: #888;
+		margin-top: 0;
+		margin-bottom: 16px;
+	}
+
+	.power-toggle.on {
+		background-color: #4caf50;
+	}
+
+	.potencia-actual {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-top: 16px;
+		font-size: 0.9em;
+		opacity: 0.85;
+	}
+
+	.tope {
+		font-size: 0.8em;
+		opacity: 0.6;
 	}
 </style>

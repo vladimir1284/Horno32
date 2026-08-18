@@ -57,7 +57,16 @@ export type ApSettings = {
 };
 
 export type HornoState = {
-	led_on: boolean;
+	on: boolean;
+	mode: 'auto' | 'manual';
+	setpoint: number;
+	manual_power_top: number;
+	manual_power_bottom: number;
+	temperature: number;
+	actual_power_top: number;
+	actual_power_bottom: number;
+	hard_max_duty_top: number;
+	hard_max_duty_bottom: number;
 };
 
 export type BrokerSettings = {

@@ -20,15 +20,15 @@
 #include "HT1621_custom.h" // Include the HT1621 library
 #include <max6675.h>
 #include "median_filter.h"
+#include "PinConfig.h"
+#include "HeatingController.h"
+#include "OvenPidController.h"
+#include "Buzzer.h"
 
 MedianFilter tempSensor = MedianFilter();
 
-int thermoDO = 19;
-int thermoCS = 18;
-int thermoCLK = 5;
-
 // Temp sensor
-MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
+MAX6675 thermocouple(THERMO_CLK_PIN, THERMO_CS_PIN, THERMO_DO_PIN);
 
 // Define the HT1621 LCD object
 HT1621 lcd;
@@ -37,11 +37,6 @@ HT1621 lcd;
 
 // Demo counters
 int count = 0;
-
-// Pin configuration for the LCD
-const int csPin = 21;   // Chip Select pin P4.3
-const int wrPin = 22;   // Write pin P4.1
-const int dataPin = 23; // Data pin P4.2
 
 unsigned long previousScreenMillis = 0; // Store the last time the display was updated
 #define SCREEN_UPDATE_INTERVAL 500      // Interval in milliseconds
@@ -62,6 +57,71 @@ HornoSettingsService hornoSettingsService = HornoSettingsService(&server,
 HornoStateService hornoStateService = HornoStateService(&server,
                                                         &esp32sveltekit,
                                                         &hornoMqttSettingsService);
+
+HeatingController heaterTop(HEATER_TOP_PIN, HEATER_TOP_SAFE_MAX_DUTY_PERCENT);
+HeatingController heaterBottom(HEATER_BOTTOM_PIN, HEATER_BOTTOM_SAFE_MAX_DUTY_PERCENT);
+OvenPidController ovenPid(&hornoSettingsService);
+Buzzer buzzer(BUZZER_PIN);
+
+#define CONTROL_LOOP_INTERVAL 250 // ms
+
+void controlHeaters(void *pvParameters)
+{
+    bool wasOn = false;
+
+    while (true)
+    {
+        float temperature = tempSensor.getValue();
+        bool turnedOn = false;
+
+        hornoStateService.read([&](HornoState &state)
+                                {
+            float desiredTop = 0;
+            float desiredBottom = 0;
+
+            if (state.on)
+            {
+                turnedOn = !wasOn;
+
+                if (state.mode == "manual")
+                {
+                    desiredTop = state.manualPowerTop;
+                    desiredBottom = state.manualPowerBottom;
+                }
+                else
+                {
+                    float output = ovenPid.compute(temperature, state.setpoint);
+                    desiredTop = output;
+                    desiredBottom = output;
+                }
+            }
+            else
+            {
+                ovenPid.reset();
+            }
+
+            wasOn = state.on;
+
+            hornoSettingsService.read([&](HornoSettings &settings)
+                                      {
+                heaterTop.setDesiredPower(min(desiredTop, (float)settings.maxPowerUp));
+                heaterBottom.setDesiredPower(min(desiredBottom, (float)settings.maxPowerDown)); }); });
+
+        if (turnedOn)
+        {
+            buzzer.beepShort();
+        }
+
+        heaterTop.setOvenTemperature(temperature);
+        heaterBottom.setOvenTemperature(temperature);
+        heaterTop.update();
+        heaterBottom.update();
+
+        hornoStateService.setActualPower(heaterTop.getActualPower(), heaterBottom.getActualPower());
+
+        vTaskDelay(pdMS_TO_TICKS(CONTROL_LOOP_INTERVAL));
+    }
+}
 
 void updateScreen(void *pvParameters)
 {
@@ -103,7 +163,7 @@ void setup()
     // Display markers as a part of the startup sequence
 
     // Initialize the LCD with the backhorno control
-    lcd.begin(csPin, wrPin, dataPin);
+    lcd.begin(LCD_CS_PIN, LCD_WR_PIN, LCD_DATA_PIN);
 
     // Clear the screen
     lcd.clear();
@@ -116,6 +176,11 @@ void setup()
     delay(500);
     lcd.setMarker(STANDBY);
     delay(500);
+
+    heaterTop.begin();
+    heaterBottom.begin();
+    buzzer.begin();
+    hornoStateService.setHardMaxDuty(HEATER_TOP_SAFE_MAX_DUTY_PERCENT, HEATER_BOTTOM_SAFE_MAX_DUTY_PERCENT);
 
     Serial.println("Setup complete.");
 
@@ -142,6 +207,15 @@ void setup()
         readTemp,               // Function that should be called
         "Read Temp Sensor",     // Name of the task (for debugging)
         2048,                   // Stack size (bytes)
+        NULL,                   // Pass no parameters
+        (tskIDLE_PRIORITY + 1), // Task priority
+        NULL,                   // Task handle
+        1                       // Pin to core 1 (or 0 if preferred)
+    );
+    xTaskCreatePinnedToCore(
+        controlHeaters,         // Function that should be called
+        "Control Heaters",      // Name of the task (for debugging)
+        4096,                   // Stack size (bytes)
         NULL,                   // Pass no parameters
         (tskIDLE_PRIORITY + 1), // Task priority
         NULL,                   // Task handle

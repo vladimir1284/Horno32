@@ -24,62 +24,124 @@
 #include <WebSocketServer.h>
 #include <ESP32SvelteKit.h>
 
-#define DEFAULT_LED_STATE false
+#define DEFAULT_ON_STATE false
+#define DEFAULT_MODE "auto"
 #define OFF_STATE "OFF"
 #define ON_STATE "ON"
 
 #define LIGHT_SETTINGS_ENDPOINT_PATH "/rest/hornoState"
 #define LIGHT_SETTINGS_SOCKET_PATH "/ws/hornoState"
-#define LIGHT_SETTINGS_EVENT "led"
+#define LIGHT_SETTINGS_EVENT "horno"
 
 class HornoState
 {
 public:
-    bool ledOn;
+    bool on;
+    String mode; // "auto" (PID sobre setpoint) o "manual" (potencias fijas)
+    float setpoint;
+    float manualPowerTop;
+    float manualPowerBottom;
     float temperature;
+    float actualPowerTop;
+    float actualPowerBottom;
+
+    // Read-only info, not settable through update(): the hard safety
+    // ceiling each heater is built with (see PinConfig.h). Shown to the
+    // user so "why does actual power never pass X%" is never a mystery.
+    float hardMaxDutyTop;
+    float hardMaxDutyBottom;
 
     static void read(HornoState &settings, JsonObject &root)
     {
-        root["led_on"] = settings.ledOn;
+        root["on"] = settings.on;
+        root["mode"] = settings.mode;
+        root["setpoint"] = settings.setpoint;
+        root["manual_power_top"] = settings.manualPowerTop;
+        root["manual_power_bottom"] = settings.manualPowerBottom;
         root["temperature"] = settings.temperature;
+        root["actual_power_top"] = settings.actualPowerTop;
+        root["actual_power_bottom"] = settings.actualPowerBottom;
+        root["hard_max_duty_top"] = settings.hardMaxDutyTop;
+        root["hard_max_duty_bottom"] = settings.hardMaxDutyBottom;
     }
 
     static StateUpdateResult update(JsonObject &root, HornoState &hornoState)
     {
-        boolean newState = root["led_on"] | DEFAULT_LED_STATE;
-        if (hornoState.ledOn != newState)
+        bool changed = false;
+
+        if (root.containsKey("on"))
         {
-            hornoState.ledOn = newState;
-            return StateUpdateResult::CHANGED;
+            bool newOn = root["on"];
+            changed |= hornoState.on != newOn;
+            hornoState.on = newOn;
         }
-        return StateUpdateResult::UNCHANGED;
+
+        if (root.containsKey("mode"))
+        {
+            String newMode = root["mode"].as<String>();
+            changed |= hornoState.mode != newMode;
+            hornoState.mode = newMode;
+        }
+
+        if (root.containsKey("setpoint"))
+        {
+            float newSetpoint = root["setpoint"];
+            changed |= hornoState.setpoint != newSetpoint;
+            hornoState.setpoint = newSetpoint;
+        }
+
+        if (root.containsKey("manual_power_top"))
+        {
+            float newPower = root["manual_power_top"];
+            changed |= hornoState.manualPowerTop != newPower;
+            hornoState.manualPowerTop = newPower;
+        }
+
+        if (root.containsKey("manual_power_bottom"))
+        {
+            float newPower = root["manual_power_bottom"];
+            changed |= hornoState.manualPowerBottom != newPower;
+            hornoState.manualPowerBottom = newPower;
+        }
+
+        return changed ? StateUpdateResult::CHANGED : StateUpdateResult::UNCHANGED;
     }
 
     static void homeAssistRead(HornoState &settings, JsonObject &root)
     {
-        root["state"] = settings.ledOn ? ON_STATE : OFF_STATE;
+        root["state"] = settings.on ? ON_STATE : OFF_STATE;
+        root["current_temperature"] = settings.temperature;
+        root["target_temperature"] = settings.setpoint;
     }
 
     static StateUpdateResult homeAssistUpdate(JsonObject &root, HornoState &hornoState)
     {
-        String state = root["state"];
-        // parse new led state
-        boolean newState = false;
-        if (state.equals(ON_STATE))
+        bool changed = false;
+
+        if (root.containsKey("state"))
         {
-            newState = true;
+            String state = root["state"];
+            bool newOn = false;
+            if (state.equals(ON_STATE))
+            {
+                newOn = true;
+            }
+            else if (!state.equals(OFF_STATE))
+            {
+                return StateUpdateResult::ERROR;
+            }
+            changed |= hornoState.on != newOn;
+            hornoState.on = newOn;
         }
-        else if (!state.equals(OFF_STATE))
+
+        if (root.containsKey("target_temperature"))
         {
-            return StateUpdateResult::ERROR;
+            float newSetpoint = root["target_temperature"];
+            changed |= hornoState.setpoint != newSetpoint;
+            hornoState.setpoint = newSetpoint;
         }
-        // change the new state, if required
-        if (hornoState.ledOn != newState)
-        {
-            hornoState.ledOn = newState;
-            return StateUpdateResult::CHANGED;
-        }
-        return StateUpdateResult::UNCHANGED;
+
+        return changed ? StateUpdateResult::CHANGED : StateUpdateResult::UNCHANGED;
     }
 };
 
@@ -93,6 +155,8 @@ public:
     void begin();
 
     void setTemp(float temp);
+    void setActualPower(float top, float bottom);
+    void setHardMaxDuty(float top, float bottom);
 
 private:
     HttpEndpoint<HornoState> _httpEndpoint;
